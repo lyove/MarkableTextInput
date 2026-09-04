@@ -1,0 +1,327 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: linear-gradient(160deg, #eef1f8 0%, #e2e8f4 100%);
+  color: #1f2430;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+}
+
+#root {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 28px 20px 16px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Main layout: paper-like card, single input area                           */
+/* ------------------------------------------------------------------ */
+
+#react-root,
+#vanilla-root {
+  max-width: 1240px;
+  width: 100%;
+}
+
+.app-card {
+  background: #efefef;
+  border-radius: 22px;
+  box-shadow: 0 12px 40px rgba(31, 36, 48, 0.1), 0 2px 8px rgba(31, 36, 48, 0.06);
+  max-width: 1240px;
+  position: relative;
+  width: 100%;
+}
+
+.app-section {
+  display: flex;
+  flex-direction: column;
+  max-width: 1240px;
+  padding-bottom: 24px;
+  width: 100%;
+}
+
+.app-section-head {
+  align-items: baseline;
+  display: flex;
+  gap: 10px;
+  margin: 0 2px 10px;
+}
+
+.app-section-title {
+  color: #1f2430;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.app-section-desc {
+  color: #8a93a5;
+  font-size: 12.5px;
+}
+
+.app-divider {
+  border: none;
+  border-top: 1px solid rgba(31, 36, 48, 0.14);
+  margin: 24px 0;
+  max-width: 920px;
+  width: 100%;
+}
+
+.app-foot {
+  color: #8a93a5;
+  font-size: 12.5px;
+  margin-top: 14px;
+  text-align: center;
+}
+
+/* Editor fills card, remove its own border */
+.app-editor.mt-editor {
+  min-height: 100px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Settings gear button                                                     */
+/* ------------------------------------------------------------------ */
+.app-gear {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  bottom: 14px;
+  color: #8a93a5;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  right: 14px;
+  transition: all 0.18s ease;
+  z-index: 100;
+}
+
+.app-gear:hover {
+  border-color: #4f7cff;
+  color: #4f7cff;
+  transform: rotate(30deg);
+}
+
+.app-gear-open {
+  background: #eef2ff;
+  border-color: #4f7cff;
+  color: #4f7cff;
+}
+
+/* ------------------------------------------------------------------ */
+/* Settings panel                                                           */
+/* ------------------------------------------------------------------ */
+.app-overlay {
+  inset: 0;
+  position: fixed;
+  z-index: 50;
+}
+
+.setting-modal {
+  animation: app-pop 0.16s ease;
+  background: #fff;
+  border: 1px solid #e6e9f0;
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(31, 36, 48, 0.18);
+  max-height: calc(100vh - 130px);
+  overflow: auto;
+  padding: 10px 0;
+  position: fixed;
+  right: 14px;
+  top: 60px;
+  width: 320px;
+  z-index: 500;
+}
+
+@keyframes app-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.setting-panel-group {
+  border-bottom: 1px solid #f0f2f6;
+  padding: 12px 16px;
+}
+
+.setting-panel-group:last-child {
+  border-bottom: none;
+}
+
+.setting-panel-title {
+  color: #8a93a5;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  margin-bottom: 10px;
+}
+
+.setting-row {
+  align-items: center;
+  color: #3a4356;
+  display: flex;
+  font-size: 14px;
+  justify-content: space-between;
+}
+
+.setting-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.setting-btn-row .app-btn {
+  flex: 1;
+  padding: 7px 0;
+}
+
+.setting-hint {
+  color: #9aa3b2;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.setting-json {
+  background: #f7f8fa;
+  border: 1px solid #e2e5ec;
+  border-radius: 8px;
+  color: #3a4356;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+  margin: 0;
+  max-height: 220px;
+  overflow: auto;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Switch toggle */
+.app-switch {
+  background: #d8dce5;
+  border: none;
+  border-radius: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: 22px;
+  padding: 0;
+  position: relative;
+  transition: background 0.15s ease;
+  width: 38px;
+}
+
+.app-switch-on {
+  background: #4f7cff;
+}
+
+.app-switch-thumb {
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(31, 36, 48, 0.25);
+  height: 18px;
+  left: 2px;
+  position: absolute;
+  top: 2px;
+  transition: transform 0.15s ease;
+  width: 18px;
+}
+
+.app-switch-on .app-switch-thumb {
+  transform: translateX(16px);
+}
+
+.app-btn {
+  background: #fff;
+  border: 1px solid #d8dce5;
+  border-radius: 8px;
+  color: #3a4356;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 6px 14px;
+  transition: all 0.12s ease;
+}
+
+.app-btn:hover:not(:disabled) {
+  border-color: #4f7cff;
+  color: #4f7cff;
+}
+
+.app-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* ------------------------------------------------------------------ */
+/* SSMLEditor demo: split pane                                          */
+/* ------------------------------------------------------------------ */
+.app-card-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-pane {
+  display: flex;
+  flex: 1.2;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px 16px 0;
+}
+
+.app-pane-output {
+  flex: 1;
+  flex-direction: column;
+  overflow: auto;
+  padding-bottom: 24px;
+}
+
+.app-pane-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 8px;
+}
+
+.app-pane-title {
+  color: #8a93a5;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+.app-pane-output .app-json {
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin: 0 0 16px;
+  overflow: auto;
+  padding: 12px;
+  white-space: break-spaces;
+}
+
+/* SSMLEditor fills card, height adapts to content */
+.app-editor.se-editor {
+  flex: 0 1 auto; /* don't stretch, let content drive height inside flex column */
+  height: auto;
+  min-height: 120px;
+  resize: vertical;
+  width: 100%;
+}

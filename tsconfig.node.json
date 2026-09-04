@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "strict": false,
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "lib": ["ES2020"],
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["vite.config.ts", "vite.config.lib.ts"]
+}
