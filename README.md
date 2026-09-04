@@ -12,22 +12,22 @@ npm run preview     # 预览构建产物
 npm run type-check  # 仅 TypeScript 类型检查
 ```
 
-演示页入口：`src/App.tsx`。页面上半区为 **SSMLEditor（Vanilla 版，本文档主线）**，工具栏提供 6 类标注的
-功能开关与只读模式切换，右侧实时输出 SSML / 纯文本并可一键复制；下半区仍挂载一份
+演示页入口：`src/App.tsx`。页面上半区为 **SSMLEditor（Vanilla 版，本文档主线）**，工具栏提供 6 类标注的功能开关、
+「全显拼音（自动注音）」与只读模式切换，右侧实时输出 SSML / 纯文本并可一键复制；下半区仍挂载一份
 `SSML-Editor-React`（旧 React 实现，迁移期间保留对照，API/行为与 Vanilla 版独立）。若已迁移完成，
 删除 `src/components/SSML-Editor-React/` 并移除 `src/App.tsx` 中 `ReactEditorSection` 及相关 import 即可。
 
 ## 特性
 
 - **6 类标注能力**，覆盖 TTS 前端最常用需求，可通过 `features` 按需开关：
-  - **注音（phoneme）**：逐字 `<phoneme ph="...">`，自动注音，多音字候选切换 + 手动输入；feature key 为 `phoneme`，声调显示格式（`symbol`/`number`）作为其子配置 `features.phoneme.toneFormat`
+  - **注音（phoneme）**：逐字 `<phoneme ph="...">`，自动注音，多音字候选切换 + 手动输入；feature key 为 `phoneme`，子配置 `features.phoneme.toneFormat`（`symbol` 带声调符号 / `number` 数字声调）控制拼音显示格式，`features.phoneme.showAll` 开启「全显拼音」——无显式注音的汉字也自动生成拼音浮标，点击拼音即可修正多音字读音
   - **停顿（break）**：位置锚点 `<break time="400ms" strength="strong"/>`，时长 6 档（100ms~1s）/ 强度 4 档（弱/中/强/极强），均可省略
   - **韵律（prosody）**：`<prosody rate/pitch/volume>` 三维度——语速、音调各 5 档（极慢/慢/中/快/极快），音量 3 档（轻柔/中等/响亮）
   - **读法（say-as）**：`<say-as interpret-as="date|time|number|digits|telephone|characters">`
   - **重音（emphasis）**：`<emphasis level="reduced|moderate|strong">`（弱读/适中/重读）
   - **提示（hint）**：为任意选区附加提示文本（教学释义、备注等），不进入 SSML 输出
-- **可视化徽标**：区间标注在文字底部显示中文短徽标（如「快·高」「重读」「日期」），一眼识别标注分布
-- **回填编辑**：点击已标注范围内的任意字符或徽标，弹窗自动回填上次参数，支持一键移除
+- **内联可视化**：区间标注以配对括号环绕文字并按类型着色——韵律 `[…]`、重音 `{…}`、读法 `(…)`；停顿以段落图标内联插入；提示（hint）以黄色点状下划线标识、悬停出释义气泡；带注音的汉字上方直接显示拼音浮标。hint 下划线绘制在字符 `::after`、拼音浮标在 `::before`，同一汉字上可同时呈现，互不遮蔽
+- **回填编辑**：点击括号 / 括号内文字 / 停顿图标 / 提示下划线范围，弹窗自动回填上次参数，支持一键移除
 - **标准 SSML 双向转换**：`modelToSSML()` / `ssmlToModel()`，支持 `<p>` / `<s>` 分段、`<break>` 空标签、单字 `<phoneme>` 包裹、嵌套范围标签正确顺序，解析失败自动回退为纯文本
 - **字符串友好赋值**：`value` / `setValue()` 同时接受**原始 SSML 字符串**与结构化 `SSMLModel`——90% 的场景可直接 `value: "<speak>...</speak>"` 字符串进、`getSSML()` 字符串出，无需手动构造块与偏移量；`SSMLEditorValue = SSMLModel | string`
 - **剪贴板友好**：复制/粘贴保留 SSML 语义，HTML 归一化后仍可正确解析；支持从外部**拖放**文本/HTML 到编辑器，按落点字符计算插入位置
@@ -137,8 +137,11 @@ const editor = new SSMLEditor({
   onChange: (next) => save(next), // next: SSMLModel
 });
 
-// 运行时更新配置（切换只读 / 功能开关 / phoneme 声调格式等）
-editor.setOptions({ readOnly: true, features: { phoneme: { toneFormat: 'number' }, break: true } });
+// 运行时更新配置（切换只读 / 功能开关 / phoneme 声调格式、全显拼音等）
+editor.setOptions({
+  readOnly: true,
+  features: { phoneme: { toneFormat: 'number', showAll: true }, break: true },
+});
 
 editor.destroy();
 ```
@@ -161,11 +164,12 @@ editor.destroy();
 ```ts
 interface PhonemeFeature {
   toneFormat?: 'symbol' | 'number';   // 声调显示格式，默认 'symbol'（ā）；'number' 为 a1
+  showAll?: boolean;                  // 「全显拼音」：无显式注音的汉字也自动生成拼音浮标（点击可修正）
 }
 
 interface AnnotationFeatures {
-  phoneme?: boolean | PhonemeFeature;  // 注音：false 关闭（隐藏注音行+不显示菜单）；
-                                         //  对象形式可额外指定 toneFormat
+  phoneme?: boolean | PhonemeFeature;  // 注音：false 关闭（隐藏拼音浮标+不显示右键菜单）；
+                                         //  对象形式可额外指定 toneFormat / showAll
   break?: boolean;
   prosody?: boolean;
   sayAs?: boolean;
@@ -174,7 +178,7 @@ interface AnnotationFeatures {
 }
 ```
 
-- `phoneme` 走 `boolean` 即开/关（关掉后注音行与右键菜单项都不显示）；要改声调格式用对象形式 `{ toneFormat: 'number' }`。
+- `phoneme` 走 `boolean` 即开/关（关掉后拼音浮标与右键菜单项都不显示）；传对象可额外配置声调格式与全显拼音，如 `{ toneFormat: 'number', showAll: true }`。
 - 其余 5 项均为简单布尔开关，缺省全部 `true`。
 
 ### 实例方法
@@ -239,7 +243,7 @@ cloneModel(model: SSMLModel): SSMLModel;   // 深拷贝模型快照（内部用�
 | 选区内右键 | 菜单：音标 / 停顿 / 韵律 / 读法 / 重音 / 提示（可按 features 裁剪）；跨段选区时需单段的标注项置灰 |
 | 光标位置右键（无选区） | 只能插入「停顿」（点标注） |
 | 从外部拖入文本 / HTML | 在落点字符处插入（按落点计算光标位置），HTML 经 SSML 归一化解析；只读或浮层打开时忽略 |
-| 点击标注范围内的文字或底部徽标 | 打开对应浮层，回填上次参数，可修改或移除；同类型重叠时弹出「替换 / 拆分共存」冲突弹窗 |
+| 点击括号 / 括号内文字 / 停顿图标 / 提示下划线范围 | 打开对应浮层，回填上次参数，可修改或移除；同类型重叠时弹出「替换 / 拆分共存」冲突弹窗 |
 | 点击注音文字 | 注音编辑浮层（候选 / 手动 / 清除） |
 | 悬停括号 / 停顿 / 提示 | 显示标注信息 tooltip；悬停标注时整段字符同步高亮，编辑后仍跟随 |
 
