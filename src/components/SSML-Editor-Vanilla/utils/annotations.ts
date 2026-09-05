@@ -115,59 +115,66 @@ export function findCrossBoundaryAnnotations(
  * documents).
  */
 export function normalizeRangeNesting(annotations: SSMLAnnotation[]): SSMLAnnotation[] {
-  const isRange = (a: SSMLAnnotation): boolean => a.type !== "break";
-  const ranges = annotations.filter(isRange).map((a) => ({ ...a }));
-  let changed = true;
-  let guard = 0;
-  while (changed && guard < 1000) {
-    guard += 1;
-    changed = false;
-    outer: for (let i = 0; i < ranges.length; i++) {
-      for (let j = i + 1; j < ranges.length; j++) {
-        const a = ranges[i];
-        const b = ranges[j];
-        if (a.blockId !== b.blockId) {
-          continue;
+  const breaks = annotations.filter((a) => a.type === "break");
+  const nonBreaks = annotations.filter((a) => a.type !== "break");
+
+  const byBlock = new Map<string, SSMLAnnotation[]>();
+  for (const a of nonBreaks) {
+    if (a.type === "phoneme") {
+      continue;
+    }
+    let arr = byBlock.get(a.blockId);
+    if (!arr) {
+      arr = [];
+      byBlock.set(a.blockId, arr);
+    }
+    arr.push({ ...a });
+  }
+
+  const piecesById = new Map<string, SSMLAnnotation[]>();
+  for (const blockRanges of byBlock.values()) {
+    const sorted = [...blockRanges].sort((a, b) => a.start - b.start || b.end - a.end);
+
+    for (const current of sorted) {
+      const cuts = new Set<number>();
+      for (const other of sorted) {
+        if (other.start < current.start && current.start < other.end && other.end < current.end) {
+          cuts.add(other.end);
         }
-        if (a.type === "phoneme" || b.type === "phoneme") {
-          continue;
-        }
-        if (a.start >= b.end || b.start >= a.end) {
-          continue;
-        }
-        if (a.start <= b.start && a.end >= b.end) {
-          continue;
-        }
-        if (b.start <= a.start && b.end >= a.end) {
-          continue;
-        }
-        const keepEarlier =
-          a.start < b.start || (a.start === b.start && a.end - a.start >= b.end - b.start);
-        const outer = keepEarlier ? a : b;
-        const inner = keepEarlier ? b : a;
-        const groupId = inner.groupId ?? inner.id;
-        const pieces: SSMLAnnotation[] = [];
-        if (inner.start < outer.start) {
-          pieces.push({ ...inner, id: uid(), groupId, start: inner.start, end: outer.start });
-        }
-        pieces.push({
-          ...inner,
-          id: uid(),
-          groupId,
-          start: Math.max(inner.start, outer.start),
-          end: Math.min(inner.end, outer.end),
-        });
-        if (inner.end > outer.end) {
-          pieces.push({ ...inner, id: uid(), groupId, start: outer.end, end: inner.end });
-        }
-        const idx = ranges.indexOf(inner);
-        ranges.splice(idx, 1, ...pieces);
-        changed = true;
-        break outer;
       }
+
+      if (cuts.size === 0) {
+        piecesById.set(current.id, [current]);
+        continue;
+      }
+
+      const points = Array.from(cuts).sort((a, b) => a - b);
+      const pieces: SSMLAnnotation[] = [];
+      const groupId = current.groupId ?? current.id;
+      let start = current.start;
+      for (const end of points) {
+        if (end > start) {
+          pieces.push({ ...current, id: uid(), groupId, start, end });
+        }
+        start = Math.max(start, end);
+      }
+      if (start < current.end) {
+        pieces.push({ ...current, id: uid(), groupId, start, end: current.end });
+      }
+      piecesById.set(current.id, pieces);
     }
   }
-  return [...annotations.filter((a) => a.type === "break"), ...ranges];
+
+  const out: SSMLAnnotation[] = [...breaks];
+  for (const a of nonBreaks) {
+    if (a.type === "phoneme") {
+      out.push({ ...a });
+      continue;
+    }
+    const pieces = piecesById.get(a.id) ?? [{ ...a }];
+    out.push(...pieces);
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -189,7 +196,7 @@ export function replaceOverlapsAndAdd(
 }
 
 /**
- * Shared low-level helper used by both splitOverlapsAndAdd and splitConflictsOnly. 
+ * Shared low-level helper used by both splitOverlapsAndAdd and splitConflictsOnly.
  */
 function sliceConflictAnnotations(
   annotations: SSMLAnnotation[],

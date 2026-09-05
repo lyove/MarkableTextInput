@@ -504,21 +504,29 @@ function patchVNode(prev: VNode, next: VNode, el: HTMLElement): void {
       break;
     }
     case "bracket": {
-      const newCls = next.classes.join(" ");
+      const bracket = next as BracketVNode;
+      const newCls = bracket.classes.join(" ");
       if (el.className !== newCls) {
         el.className = newCls;
       }
-      const sideVal = next.side;
-      if (el.getAttribute("data-side") !== sideVal) {
-        el.setAttribute("data-side", sideVal);
-      }
+      el.setAttribute("data-ann-id", bracket.annId);
+      el.setAttribute("data-ann-type", bracket.annType);
+      el.setAttribute("data-side", bracket.side);
+      el.setAttribute("data-ann-start", String(bracket.start));
+      el.setAttribute("data-ann-end", String(bracket.end));
+      el.setAttribute(
+        "aria-label",
+        `${bracket.annType} ${bracket.side === "left" ? "start" : "end"}`,
+      );
       break;
     }
     case "break": {
-      const newCls = next.classes.join(" ");
+      const breakVNode = next as BreakVNode;
+      const newCls = breakVNode.classes.join(" ");
       if (el.className !== newCls) {
         el.className = newCls;
       }
+      el.setAttribute("data-pos", String(breakVNode.pos));
       break;
     }
     case "caret":
@@ -533,7 +541,12 @@ function patchVNode(prev: VNode, next: VNode, el: HTMLElement): void {
     }
     case "hint-group": {
       const prevGroup = prev as HintGroupVNode;
-      diffBlockChildren(prevGroup.children, next.children, el);
+      const nextGroup = next as HintGroupVNode;
+      el.setAttribute("data-block-id", nextGroup.blockId);
+      el.setAttribute("data-hint", nextGroup.hint);
+      el.setAttribute("data-hint-start", String(nextGroup.start));
+      el.setAttribute("data-hint-end", String(nextGroup.end));
+      diffBlockChildren(prevGroup.children, nextGroup.children, el);
       break;
     }
   }

@@ -3,6 +3,7 @@
  * listener wiring and CSS state sync.
  */
 import type { EditorContext } from "./context";
+import { registerGlobalEventTarget, unregisterGlobalEventTarget } from "./global-events";
 
 export class DomService {
   constructor(private ctx: EditorContext) {}
@@ -69,15 +70,7 @@ export class DomService {
     ctx.content.addEventListener("mousedown", ctx.boundContentMouseDown);
     ctx.content.addEventListener("mouseover", ctx.boundContentMouseOver);
     ctx.content.addEventListener("mouseout", ctx.boundContentMouseOut);
-    document.addEventListener("selectionchange", ctx.boundSelectionChange);
-    window.addEventListener("resize", ctx.boundScroll, { passive: true });
-    window.addEventListener("scroll", ctx.boundScroll, { capture: true, passive: true });
-    window.addEventListener("mouseup", ctx.boundMouseUp, true);
-    window.addEventListener("mousemove", ctx.boundMouseMove, true);
-    window.addEventListener("blur", ctx.boundWindowBlur);
-    document.addEventListener("mousedown", ctx.boundDocMouseDown, true);
-    document.addEventListener("copy", ctx.boundDocCopy, true);
-    document.addEventListener("cut", ctx.boundDocCut, true);
+    registerGlobalEventTarget(ctx);
   }
 
   detach(): void {
@@ -101,15 +94,7 @@ export class DomService {
     ctx.content.removeEventListener("mousedown", ctx.boundContentMouseDown);
     ctx.content.removeEventListener("mouseover", ctx.boundContentMouseOver);
     ctx.content.removeEventListener("mouseout", ctx.boundContentMouseOut);
-    document.removeEventListener("selectionchange", ctx.boundSelectionChange);
-    window.removeEventListener("resize", ctx.boundScroll);
-    window.removeEventListener("scroll", ctx.boundScroll, { capture: true });
-    window.removeEventListener("mouseup", ctx.boundMouseUp, true);
-    window.removeEventListener("mousemove", ctx.boundMouseMove, true);
-    window.removeEventListener("blur", ctx.boundWindowBlur);
-    document.removeEventListener("mousedown", ctx.boundDocMouseDown, true);
-    document.removeEventListener("copy", ctx.boundDocCopy, true);
-    document.removeEventListener("cut", ctx.boundDocCut, true);
+    unregisterGlobalEventTarget(ctx);
   }
 
   destroyOverlays(): void {
