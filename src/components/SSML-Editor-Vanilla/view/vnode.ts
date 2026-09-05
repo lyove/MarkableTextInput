@@ -93,6 +93,38 @@ export function vnodeKey(vn: VNode): string {
   }
 }
 
+/**
+ * Extract the same reconciliation key from a live DOM element that vnodeKey()
+ * produces for a VNode. Returns null for unrecognized elements (which should
+ * be removed during reconciliation).
+ */
+function domKey(el: HTMLElement): string | null {
+  if (el.classList.contains("se-ch")) {
+    const idx = el.getAttribute("data-char-idx");
+    return idx != null ? `ch:${idx}` : null;
+  }
+  if (el.classList.contains("se-bracket")) {
+    const annId = el.getAttribute("data-ann-id");
+    const side = el.getAttribute("data-side");
+    return annId && side ? `br:${annId}:${side}` : null;
+  }
+  if (el.classList.contains("se-break")) {
+    const annId = el.getAttribute("data-ann-id");
+    return annId ? `bk:${annId}` : null;
+  }
+  if (el.classList.contains("se-hint-group")) {
+    const start = el.getAttribute("data-hint-start");
+    return start != null ? `hg:${start}` : null;
+  }
+  if (el.classList.contains("se-caret")) {
+    return "caret";
+  }
+  if (el.classList.contains("se-composing")) {
+    return "comp";
+  }
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // SVG constant for break marks (reused — never varies between VNodes)
 // ---------------------------------------------------------------------------
@@ -556,6 +588,17 @@ function patchVNode(prev: VNode, next: VNode, el: HTMLElement): void {
  * Diff two VNode lists and patch the parent's DOM children in-place.
  */
 export function diffBlockChildren(prev: VNode[], next: VNode[], parent: HTMLElement): void {
+  const prevKeys = new Set(prev.map(vnodeKey));
+  const liveChildren = Array.from(parent.children).filter(
+    (el): el is HTMLElement => el instanceof HTMLElement,
+  );
+  for (const el of liveChildren) {
+    const key = domKey(el);
+    if (key == null || !prevKeys.has(key)) {
+      el.remove();
+    }
+  }
+
   if (prev.length === next.length) {
     let allMatch = true;
     for (let i = 0; i < prev.length; i++) {
@@ -579,22 +622,25 @@ export function diffBlockChildren(prev: VNode[], next: VNode[], parent: HTMLElem
   const children = Array.from(parent.children).filter(
     (el): el is HTMLElement => el instanceof HTMLElement,
   );
-  const prevElByKey = new Map<string, HTMLElement>();
-  const prevVNodeByKey = new Map<string, VNode>();
-  for (let i = 0; i < prev.length; i++) {
-    const key = vnodeKey(prev[i]);
-    const el = children[i];
-    if (el) {
-      prevElByKey.set(key, el);
-      prevVNodeByKey.set(key, prev[i]);
+
+  const domByKey = new Map<string, HTMLElement>();
+  for (const el of children) {
+    const key = domKey(el);
+    if (key && !domByKey.has(key)) {
+      domByKey.set(key, el);
     }
+  }
+
+  const prevVNodeByKey = new Map<string, VNode>();
+  for (const v of prev) {
+    prevVNodeByKey.set(vnodeKey(v), v);
   }
 
   const used = new Set<string>();
   const nextEls: HTMLElement[] = [];
   for (const nextVNode of next) {
     const key = vnodeKey(nextVNode);
-    let el = prevElByKey.get(key);
+    let el = domByKey.get(key);
     if (el && !used.has(key)) {
       used.add(key);
       const prevVNode = prevVNodeByKey.get(key);
