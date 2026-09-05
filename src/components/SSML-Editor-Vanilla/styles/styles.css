@@ -2,15 +2,14 @@
  * SSMLEditor styles
  */
 
+/* ================================================================== */
+/* 1. Base container & content layout                                  */
+/* ================================================================== */
+
 .se-editor {
   position: relative;
-  border: 1px solid #e2e6f0;
-  border-radius: 8px;
-  padding: 10px 14px 12px;
-  background: #fff;
-  font-size: 16px;
   line-height: 2rem;
-  color: #1f2430;
+  color: inherit;
   outline: none;
   cursor: text;
   width: auto;
@@ -19,8 +18,12 @@
   resize: vertical;
 }
 
-.se-content {
-  min-height: 2rem;
+.se-editor:not(.se-input-readonly) {
+  font-size: 16px;
+  border: 1px solid #e2e6f0;
+  border-radius: 8px;
+  padding: 10px 14px 12px;
+  background: #fff;
 }
 
 .se-editor.se-focused:not(.se-input-readonly) {
@@ -33,14 +36,18 @@
   background: transparent;
 }
 
+.se-content {
+  min-height: 2rem;
+}
+
 .se-line {
   margin: 0;
   min-height: 1.9em;
 }
 
-/* ------------------------------------------------------------------ */
-/* Char span + pseudo element pinyin                                   */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
+/* 2. Char spans & pinyin ruby                                         */
+/* ================================================================== */
 
 .se-ch {
   position: relative;
@@ -57,6 +64,10 @@
   position: relative;
   text-align: center;
   vertical-align: baseline;
+}
+
+.se-py {
+  cursor: pointer;
 }
 
 .se-py-line {
@@ -89,13 +100,9 @@
   content: attr(data-tone);
 }
 
-.se-py {
-  cursor: pointer;
-}
-
-/* ------------------------------------------------------------------ */
-/* Range annotation visuals — bracket-based                           */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
+/* 3. Range annotation visuals (bracket-based)                         */
+/* ================================================================== */
 
 .se-bracket {
   display: inline;
@@ -173,145 +180,9 @@
   background: rgba(139, 92, 246, 0.08);
 }
 
-/* ------------------------------------------------------------------ */
-/* Bracket tooltip                                                     */
-/* ------------------------------------------------------------------ */
-
-.se-bracket-tooltip {
-  position: absolute;
-  z-index: 1250;
-  padding: 7px 10px;
-  border-radius: 7px;
-  background: #0f172a;
-  color: #e2e8f0;
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  animation: se-pop 0.12s ease;
-  filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.22));
-}
-
-.se-bracket-tooltip__range {
-  color: #94a3b8;
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-
-.se-ann-type-chip {
-  display: inline-block;
-  font-size: 11px;
-  line-height: 1;
-  padding: 3px 7px;
-  border-radius: 999px;
-  color: #fff;
-  font-weight: 600;
-  margin-right: 6px;
-}
-.se-ann-type-chip--prosody {
-  background: #f59e0b;
-}
-.se-ann-type-chip--emphasis {
-  background: #ef4444;
-}
-.se-ann-type-chip--sayAs {
-  background: #10b981;
-}
-.se-ann-type-chip--pinyin {
-  background: #3b82f6;
-}
-.se-ann-type-chip--break {
-  background: #64748b;
-}
-.se-ann-type-chip--hint {
-  background: #8b5cf6;
-}
-
-.se-ch.se-hinted {
-  position: relative;
-  cursor: help;
-}
-
-.se-ch.se-hinted::after {
-  content: "";
-  position: absolute;
-  left: 1px;
-  right: 1px;
-  bottom: 4px;
-  border-bottom: 2px dotted #f5a623;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0;
-}
-
-.se-hint-group:hover .se-ch.se-hinted {
-  background: rgba(245, 166, 35, 0.1);
-}
-
-/* ------------------------------------------------------------------ */
-/* Hint group (wrapping container for a contiguous hinted run)         */
-/* ------------------------------------------------------------------ */
-
-.se-hint-group {
-  position: relative;
-  display: inline;
-}
-
-.se-hint-tooltip {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%) translateY(3px);
-  min-width: 64px;
-  max-width: 280px;
-  padding: 10px 12px;
-  color: #fff;
-  font-size: 12px;
-  line-height: 1.5;
-  font-weight: normal;
-  font-style: normal;
-  text-align: left;
-  white-space: pre-wrap;
-  word-break: break-word;
-  z-index: 1200;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.14s ease, transform 0.14s ease, visibility 0.14s ease;
-  background: #1f2430;
-  border-radius: 8px;
-  filter: drop-shadow(0 -3px 8px rgba(15, 23, 42, 0.18));
-  animation: seHintTipIn 0.14s ease forwards;
-}
-
-.se-hint-tooltip__arrow {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 12px;
-  height: 8px;
-  background: #1f2430;
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
-}
-
-@keyframes seHintTipIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(3px);
-    visibility: hidden;
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-    visibility: visible;
-  }
-}
+/* ================================================================== */
+/* 4. Break annotation                                                  */
+/* ================================================================== */
 
 .se-break {
   display: inline-flex;
@@ -352,13 +223,155 @@
   background: transparent !important;
   box-shadow: none !important;
 }
+
 .se-break--ro:hover {
   color: #94a3b8;
   background: transparent;
 }
-/* ------------------------------------------------------------------ */
-/* Caret / placeholder / hidden host                                   */
-/* ------------------------------------------------------------------ */
+
+/* ================================================================== */
+/* 5. Hint annotation & tooltip                                         */
+/* ================================================================== */
+
+.se-ch.se-hinted {
+  position: relative;
+  cursor: help;
+}
+
+.se-ch.se-hinted::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  bottom: 4px;
+  border-bottom: 2px dotted #f5a623;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.se-hint-group:hover .se-ch.se-hinted {
+  background: rgba(245, 166, 35, 0.1);
+}
+
+.se-hint-group {
+  position: relative;
+  display: inline;
+}
+
+.se-hint-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%) translateY(3px);
+  min-width: 64px;
+  max-width: 280px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: normal;
+  font-style: normal;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+  z-index: 1200;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.14s ease, transform 0.14s ease, visibility 0.14s ease;
+  background: #1f2430;
+  border-radius: 8px;
+  filter: drop-shadow(0 -3px 8px rgba(15, 23, 42, 0.18));
+  animation: seHintTipIn 0.14s ease forwards;
+}
+
+.se-hint-tooltip__arrow {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 8px;
+  background: #1f2430;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+@keyframes seHintTipIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(3px);
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    visibility: visible;
+  }
+}
+
+/* ================================================================== */
+/* 6. Bracket tooltip & annotation type chips                           */
+/* ================================================================== */
+
+.se-bracket-tooltip {
+  position: absolute;
+  z-index: 1250;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: se-pop 0.12s ease;
+  filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.22));
+}
+
+.se-bracket-tooltip__range {
+  color: #94a3b8;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.se-ann-type-chip {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.se-ann-type-chip--prosody {
+  background: #f59e0b;
+}
+.se-ann-type-chip--emphasis {
+  background: #ef4444;
+}
+.se-ann-type-chip--sayAs {
+  background: #10b981;
+}
+.se-ann-type-chip--pinyin {
+  background: #3b82f6;
+}
+.se-ann-type-chip--break {
+  background: #64748b;
+}
+.se-ann-type-chip--hint {
+  background: #8b5cf6;
+}
+
+/* ================================================================== */
+/* 7. Caret / IME composing / placeholder / hidden input host          */
+/* ================================================================== */
 
 .se-caret {
   display: inline-block;
@@ -420,7 +433,13 @@
   user-select: none;
 }
 
-
+/*
+ * Hidden contenteditable host that captures all keyboard / IME input.
+ * Kept invisible (opacity:0) and off-screen by default; positioned at
+ * the caret during editing so the OS IME candidate window tracks the
+ * cursor.  position:absolute (not fixed) avoids being hijacked by an
+ * ancestor CSS transform (e.g. inside a modal with entry animation).
+ */
 .se-vanilla .se-input-host {
   position: absolute;
   top: -9999px;
@@ -446,9 +465,9 @@
   opacity: 0;
 }
 
-/* ------------------------------------------------------------------ */
-/* Popover animation                                                    */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
+/* 8. Shared keyframe animations                                        */
+/* ================================================================== */
 
 @keyframes se-pop {
   from {
@@ -461,9 +480,18 @@
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* Popovers (shared by all annotation forms)                           */
-/* ------------------------------------------------------------------ */
+@keyframes se-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ================================================================== */
+/* 9. Shared popover primitives                                         */
+/* ================================================================== */
 
 .se-popover {
   position: absolute;
@@ -495,6 +523,8 @@
   color: #8a93a6;
 }
 
+/* --- Char tabs (phoneme character picker) --- */
+
 .se-char-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -523,6 +553,8 @@
   border-color: #4f7cff;
   color: #fff;
 }
+
+/* --- Mode tabs (say-as / prosody variant switcher) --- */
 
 .se-mode-tabs {
   position: relative;
@@ -573,6 +605,8 @@
   color: #4f7cff;
 }
 
+/* --- Candidates box (prosody rate/pitch/volume presets) --- */
+
 .se-candidates-box {
   position: relative;
   display: flex;
@@ -603,6 +637,8 @@
   transform: rotate(45deg);
   margin-left: -4px;
 }
+
+/* --- Chips (selectable preset values) --- */
 
 .se-chip {
   height: 26px;
@@ -656,6 +692,8 @@
   text-decoration: underline;
 }
 
+/* --- Edit toggle (inline custom-value editor) --- */
+
 .se-edit-toggle {
   width: 28px;
   height: 28px;
@@ -675,6 +713,8 @@
   background: rgba(79, 124, 255, 0.1);
   color: #4f7cff;
 }
+
+/* --- Popover editor (phoneme inline edit panel) --- */
 
 .se-popover-editor {
   display: flex;
@@ -751,6 +791,8 @@
   color: #4f7cff;
 }
 
+/* --- Popover actions & buttons --- */
+
 .se-popover-actions {
   display: flex;
   justify-content: space-between;
@@ -802,6 +844,7 @@
   border-color: #e2e6f0;
   color: #475569;
 }
+
 .se-btn--ghost:hover:not(:disabled) {
   background: #f7f8fb;
   color: #0f172a;
@@ -812,12 +855,26 @@
   border-color: #fdba74;
   color: #c2410c;
 }
+
 .se-btn--warning:hover:not(:disabled) {
   background: #ffedd5;
 }
 
-/* ------------------------------------------------------------------ */
-/* Phoneme popover: auto-fill notice + phoneme (IPA) placeholder      */
+/* --- Form fields --- */
+
+.se-field {
+  margin-bottom: 8px;
+}
+
+.se-field-label {
+  font-size: 12px;
+  color: #8a93a6;
+  margin-bottom: 4px;
+}
+
+/* ================================================================== */
+/* 10. Phoneme popover specifics                                        */
+/* ================================================================== */
 
 .se-phoneme-notice {
   margin-top: 8px;
@@ -829,26 +886,32 @@
   border-radius: 6px;
   border: 1px solid #e2e6f0;
 }
+
 .se-phoneme-notice b {
   color: #4f7cff;
   font-weight: 600;
 }
+
 .se-phoneme-empty {
   text-align: center;
   color: #8a93a6;
   font-size: 14px;
 }
+
 .se-phoneme-empty-icon {
   font-size: 28px;
   margin-bottom: 10px;
 }
+
 .se-phoneme-empty-title {
   margin-bottom: 8px;
   font-weight: 500;
 }
+
 .se-phoneme-empty-desc {
   font-size: 12px;
 }
+
 .se-phoneme-char-list {
   display: flex;
   flex-wrap: wrap;
@@ -856,6 +919,7 @@
   justify-content: center;
   margin-top: 14px;
 }
+
 .se-phoneme-char {
   display: inline-flex;
   align-items: center;
@@ -870,106 +934,9 @@
   color: #1f2430;
 }
 
-/* ------------------------------------------------------------------ */
-/* Overlays & dialogs (overlap resolution modal, misc popover guards) */
-/* ------------------------------------------------------------------ */
-
-.se-overlay {
-  position: absolute;
-  inset: 0;
-  background: transparent;
-  z-index: 1300;
-}
-.se-overlay--opaque {
-  background: rgba(15, 23, 42, 0.38);
-  backdrop-filter: blur(1.5px);
-  animation: se-fade 0.12s ease;
-}
-@keyframes se-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.se-dialog {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1400;
-  width: 460px;
-  max-width: calc(100vw - 32px);
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.28);
-  overflow: hidden;
-  animation: se-pop 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.se-dialog__title {
-  padding: 14px 18px 10px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #0f172a;
-  border-bottom: 1px solid #eef1f6;
-}
-.se-dialog__body {
-  padding: 14px 18px 6px;
-}
-.se-dialog__desc {
-  font-size: 13px;
-  color: #334155;
-  margin-bottom: 10px;
-}
-.se-dialog__list {
-  list-style: none;
-  margin: 6px 0 4px;
-  padding: 6px 8px;
-  background: #f7f8fb;
-  border: 1px solid #e8ecf4;
-  border-radius: 8px;
-  max-height: 180px;
-  overflow: auto;
-}
-.se-dialog__item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  padding: 5px 4px;
-  color: #1f2430;
-  border-bottom: 1px dashed #e5e7eb;
-}
-.se-dialog__item:last-child {
-  border-bottom: none;
-}
-.se-dialog__range {
-  color: #64748b;
-  font-variant-numeric: tabular-nums;
-  font-size: 11.5px;
-  margin-right: auto;
-}
-.se-dialog__attrs {
-  color: #0f172a;
-  font-weight: 500;
-  font-size: 12px;
-}
-.se-dialog__hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.55;
-}
-.se-dialog__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 12px 18px 14px;
-  border-top: 1px solid #eef1f6;
-  background: #fbfcfe;
-}
+/* ================================================================== */
+/* 11. Hint popover specifics                                           */
+/* ================================================================== */
 
 .se-hint-popover .se-hint-textarea {
   width: 100%;
@@ -991,19 +958,113 @@
   background: #fff;
 }
 
-.se-field {
-  margin-bottom: 8px;
+/* ================================================================== */
+/* 12. Overlays & resolution dialogs                                    */
+/* ================================================================== */
+
+.se-overlay {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  z-index: 1300;
 }
 
-.se-field-label {
+.se-overlay--opaque {
+  background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(1.5px);
+  animation: se-fade 0.12s ease;
+}
+
+.se-dialog {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1400;
+  width: 460px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.28);
+  overflow: hidden;
+  animation: se-pop 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.se-dialog__title {
+  padding: 14px 18px 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  border-bottom: 1px solid #eef1f6;
+}
+
+.se-dialog__body {
+  padding: 14px 18px 6px;
+}
+
+.se-dialog__desc {
+  font-size: 13px;
+  color: #334155;
+  margin-bottom: 10px;
+}
+
+.se-dialog__list {
+  list-style: none;
+  margin: 6px 0 4px;
+  padding: 6px 8px;
+  background: #f7f8fb;
+  border: 1px solid #e8ecf4;
+  border-radius: 8px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.se-dialog__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  padding: 5px 4px;
+  color: #1f2430;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.se-dialog__item:last-child {
+  border-bottom: none;
+}
+
+.se-dialog__range {
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  margin-right: auto;
+}
+
+.se-dialog__attrs {
+  color: #0f172a;
+  font-weight: 500;
   font-size: 12px;
-  color: #8a93a6;
-  margin-bottom: 4px;
 }
 
-/* ------------------------------------------------------------------ */
-/* Context menu                                                        */
-/* ------------------------------------------------------------------ */
+.se-dialog__hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.se-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px 14px;
+  border-top: 1px solid #eef1f6;
+  background: #fbfcfe;
+}
+
+/* ================================================================== */
+/* 13. Context menu                                                     */
+/* ================================================================== */
 
 .se-ctx {
   position: absolute;

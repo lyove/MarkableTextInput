@@ -9,8 +9,8 @@ import {
 } from "./components/SSML-Editor-Vanilla";
 import type { AnnotationFeatures, SSMLEditorValue } from "./components/SSML-Editor-Vanilla";
 
-const SSML_SAMPLE = "";
-// '<speak><p><say-as interpret-as="characters">语音合成标记语言</say-as>（SSML）能<hint text="关键词：语速放慢、咬字清晰"><prosody rate="fast" pitch="medium" volume="medium">精确控制</prosody></hint>停顿、语速和发音。<break time="500ms"/>客服热线 <say-as interpret-as="telephone">4008-123-456</say-as>，<break time="200ms"/><say-as interpret-as="date">2026年9月1日</say-as>正式上线，<break time="300ms"/>广泛应用于<prosody rate="slow" pitch="high" volume="loud"><hint text="重音强调，语气上扬"><emphasis level="strong">智能客服</emphasis></hint>、<emphasis level="moderate">有声读物</emphasis>、<emphasis level="reduced">导航播报</emphasis></prosody>等场景。<break time="400ms"/><phoneme ph="chong2">重</phoneme>庆人喜欢音<phoneme ph="yue4">乐</phoneme>：<phoneme ph="zhong4">重</phoneme>读时，&quot;重&quot;读 zhòng，也可读 chóng。</p></speak>';
+const SSML_SAMPLE =
+  '<speak><p><say-as interpret-as="characters">语音合成标记语言</say-as>（SSML）能<hint text="关键词：语速放慢、咬字清晰"><prosody rate="fast" pitch="medium" volume="medium">精确控制</prosody></hint>停顿、语速和发音。<break time="500ms"/>客服热线 <say-as interpret-as="telephone">4008-123-456</say-as>，<break time="200ms"/><say-as interpret-as="date">2026年9月1日</say-as>正式上线，<break time="300ms"/>广泛应用于<prosody rate="slow" pitch="high" volume="loud"><hint text="重音强调，语气上扬"><emphasis level="strong">智能客服</emphasis></hint>、<emphasis level="moderate">有声读物</emphasis>、<emphasis level="reduced">导航播报</emphasis></prosody>等场景。<break time="400ms"/><phoneme ph="chong2">重</phoneme>庆人喜欢音<phoneme ph="yue4">乐</phoneme>：<phoneme ph="zhong4">重</phoneme>读时，&quot;重&quot;读 zhòng，也可读 chóng。</p></speak>';
 
 const FEATURE_KEYS: Array<keyof Required<AnnotationFeatures>> = [
   "phoneme",
