@@ -24,8 +24,27 @@ export class ImeService {
     if (this.ctx.modalOpen()) {
       return;
     }
+    this.ensureCursorAtStart();
     this.ctx.state.composingText = "";
     this.ctx.selection.positionInputHostToCursor();
+  }
+
+  private ensureCursorAtStart(): void {
+    const { ctx } = this;
+    if (ctx.state.cursor) {
+      return;
+    }
+    const model = ctx.state.model;
+    if (model.blocks.length > 0) {
+      const first = model.blocks[0];
+      ctx.bus.emit("cursor:change", { blockId: first.id, idx: 0 });
+      ctx.bus.emit("render:request", { dirty: true });
+    } else {
+      const blockId = createBlockId();
+      ctx.state.model = { ...model, blocks: [{ id: blockId, text: "" }] };
+      ctx.bus.emit("cursor:change", { blockId, idx: 0 });
+      ctx.bus.emit("render:request", { dirty: true });
+    }
   }
 
   handleCompositionUpdate(e: CompositionEvent): void {

@@ -105,10 +105,29 @@ export class RenderService {
       this.ctx.state.render.contentDirty = false;
       this.ctx.state.flags.hostPosStale = true;
     }
+    this.syncPlaceholder();
     this.renderFloating();
     if (this.ctx.state.flags.hostPosStale) {
       this.ctx.selection.positionInputHostToCursor();
       this.ctx.state.flags.hostPosStale = false;
+    }
+  }
+
+  /**
+   * Show or hide the placeholder
+   */
+  private syncPlaceholder(): void {
+    const { ctx } = this;
+    const shouldShow =
+      !!ctx.placeholder && isEmptyModel(ctx.state.model) && !ctx.state.composingText;
+    const existing = ctx.content.querySelector<HTMLElement>(".se-placeholder");
+    if (shouldShow && !existing) {
+      const ph = document.createElement("div");
+      ph.className = "se-placeholder";
+      ph.textContent = ctx.placeholder;
+      ctx.content.appendChild(ph);
+    } else if (!shouldShow && existing) {
+      existing.remove();
     }
   }
 
@@ -444,12 +463,6 @@ export class RenderService {
     const { ctx } = this;
     const empty = isEmptyModel(model);
     const frag = document.createDocumentFragment();
-    if (empty && ctx.placeholder) {
-      const ph = document.createElement("div");
-      ph.className = "se-placeholder";
-      ph.textContent = ctx.placeholder;
-      frag.appendChild(ph);
-    }
     const els = new Map<string, HTMLElement>();
     const vnodesMap = new Map<string, VNode[]>();
     const domRefs = new Map<string, VNodeDomRefs>();
