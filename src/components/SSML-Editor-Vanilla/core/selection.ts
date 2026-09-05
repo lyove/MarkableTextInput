@@ -72,8 +72,9 @@ export class SelectionService {
       host.style.top = "-9999px";
       return;
     }
-    host.style.left = `${Math.round(rect.left)}px`;
-    host.style.top = `${Math.round(rect.top)}px`;
+    const containerRect = ctx.container.getBoundingClientRect();
+    host.style.left = `${Math.round(rect.left - containerRect.left)}px`;
+    host.style.top = `${Math.round(rect.top - containerRect.top)}px`;
   }
 
   focusInputHost(): void {

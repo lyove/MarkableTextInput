@@ -178,7 +178,7 @@
 /* ------------------------------------------------------------------ */
 
 .se-bracket-tooltip {
-  position: fixed;
+  position: absolute;
   z-index: 1250;
   padding: 7px 10px;
   border-radius: 7px;
@@ -260,7 +260,7 @@
 }
 
 .se-hint-tooltip {
-  position: fixed;
+  position: absolute;
   left: 50%;
   bottom: 0;
   transform: translateX(-50%) translateY(3px);
@@ -419,7 +419,7 @@
 
 
 .se-vanilla .se-input-host {
-  position: fixed;
+  position: absolute;
   top: -9999px;
   left: -9999px;
   width: max-content;
@@ -462,7 +462,7 @@
 /* ------------------------------------------------------------------ */
 
 .se-popover {
-  position: fixed;
+  position: absolute;
   z-index: 1000;
   width: 320px;
   background: #fff;
@@ -871,7 +871,7 @@
 /* ------------------------------------------------------------------ */
 
 .se-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   background: transparent;
   z-index: 1300;
@@ -891,7 +891,7 @@
 }
 
 .se-dialog {
-  position: fixed;
+  position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -1002,7 +1002,7 @@
 /* ------------------------------------------------------------------ */
 
 .se-ctx {
-  position: fixed;
+  position: absolute;
   z-index: 1100;
   min-width: 132px;
   background: #fff;
