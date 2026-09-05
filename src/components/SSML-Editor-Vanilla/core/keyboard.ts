@@ -189,7 +189,8 @@ export class KeyboardService {
         const r = deleteAtCursor(ctx.state.model, c, true);
         if (r) {
           e.preventDefault();
-          ctx.history.commit(r.model, true);
+          const merge = r.model.blocks.length === ctx.state.model.blocks.length;
+          ctx.history.commit(r.model, merge, merge ? "delete-backward" : undefined);
           this.moveCaret(r.cursor);
           this.afterEditCleanup();
         }
@@ -199,7 +200,8 @@ export class KeyboardService {
         const r = deleteAtCursor(ctx.state.model, c, false);
         if (r) {
           e.preventDefault();
-          ctx.history.commit(r.model, true);
+          const merge = r.model.blocks.length === ctx.state.model.blocks.length;
+          ctx.history.commit(r.model, merge, merge ? "delete-forward" : undefined);
           this.moveCaret(r.cursor);
           this.afterEditCleanup();
         }
@@ -212,7 +214,7 @@ export class KeyboardService {
         const r = splitBlockAtCursor(ctx.state.model, c);
         if (r) {
           e.preventDefault();
-          ctx.history.commit(r.model, true);
+          ctx.history.commit(r.model);
           this.moveCaret(r.cursor);
           this.afterEditCleanup();
         }

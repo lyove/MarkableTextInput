@@ -2,7 +2,7 @@
  * EditorState — centralized, type-safe state for the SSML editor.
  */
 
-import type { Cursor, ModelHint, SelectionSpan, SSMLAnnotation, SSMLModel } from "../types";
+import type { Cursor, SelectionSpan, SSMLAnnotation, SSMLModel } from "../types";
 import type { ContextMenu } from "../components/context-menu";
 import type { CrossBoundaryPrompt, OverlapPrompt } from "../view/overlays";
 import type { VNode, VNodeDomRefs } from "../view/vnode";
@@ -73,12 +73,8 @@ export interface RenderState {
   floatLayer: HTMLDivElement | null;
   contentDirty: boolean;
   paintedEls: Map<string, HTMLElement> | null;
-  paintedText: Map<string, string> | null;
-  paintedAnn: Map<string, string> | null;
-  paintedHints: Map<string, string> | null;
+  paintedFingerprints: Map<string, string> | null;
   paintedModel: SSMLModel | null;
-  paintedAnnList: SSMLAnnotation[] | null;
-  paintedHintList: ModelHint[] | null;
   paintedEmpty: boolean;
   forceFullRender: boolean;
   lastSelSpans: SelectionSpan[] | null;
@@ -135,13 +131,8 @@ export interface EditorState {
  * Create the initial `EditorState` with sensible defaults.
  *
  * @param model    The starting document value.
- * @param debug  When `true`, every property write on the state object (and its
- *               nested `overlays` / `render` / `flags` groups) is logged to
- *               the console via `console.debug`, prefixed with
- *               `[SSMLEditor:state]`.  Production builds should leave this
- *               `false` for zero overhead.
  */
-export function createEditorState(model: SSMLModel, debug = false): EditorState {
+export function createEditorState(model: SSMLModel): EditorState {
   const overlays: OverlayState = {
     ctxMenu: null,
     ctxMenuOpen: false,
@@ -163,12 +154,8 @@ export function createEditorState(model: SSMLModel, debug = false): EditorState 
     floatLayer: null,
     contentDirty: true,
     paintedEls: null,
-    paintedText: null,
-    paintedAnn: null,
-    paintedHints: null,
+    paintedFingerprints: null,
     paintedModel: null,
-    paintedAnnList: null,
-    paintedHintList: null,
     paintedEmpty: true,
     forceFullRender: false,
     lastSelSpans: null,
@@ -203,48 +190,5 @@ export function createEditorState(model: SSMLModel, debug = false): EditorState 
     flags,
   };
 
-  if (!debug) {
-    return state;
-  }
-
-  // Wrap each sub-group + top-level in a write-tracing Proxy.
-  const log = (path: string, value: unknown): void => {
-    const label =
-      value === null
-        ? "null"
-        : typeof value === "object" && value
-        ? (value as { constructor: { name: string } }).constructor.name
-        : String(value);
-    console.debug(`[SSMLEditor:state] ${path} = ${label}`);
-  };
-
-  state.overlays = wrapGroup(overlays, "overlays", log);
-  state.render = wrapGroup(render, "render", log);
-  state.flags = wrapGroup(flags, "flags", log);
-  return wrapGroup(state, "state", log);
-}
-
-// ---------------------------------------------------------------------------
-// Internal: Proxy write tracer
-// ---------------------------------------------------------------------------
-
-/**
- * Wrap a plain object in a `Proxy` that logs every property **write** to
- * `log(path, value)`.  Reads are pass-through (no tracing overhead on reads).
- */
-function wrapGroup<T extends object>(
-  target: T,
-  tag: string,
-  log: (path: string, value: unknown) => void,
-): T {
-  return new Proxy(target, {
-    set(obj, key, value, receiver) {
-      const prev = Reflect.get(obj, key, receiver);
-      Reflect.set(obj, key, value, receiver);
-      if (prev !== value) {
-        log(`${tag}.${String(key)}`, value);
-      }
-      return true;
-    },
-  });
+  return state;
 }

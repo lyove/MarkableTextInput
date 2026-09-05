@@ -129,7 +129,7 @@ export class ActionsService {
     const loc = ctx.state.overlays.editing.locations[pos];
     const next = setCharPhoneme(ctx.state.model, loc.blockId, loc.charIdx, val, tone);
     if (next !== ctx.state.model) {
-      ctx.history.commit(next, true);
+      ctx.history.commit(next, true, "phoneme");
     }
     if (ctx.state.overlays.editing) {
       ctx.state.overlays.editing = {

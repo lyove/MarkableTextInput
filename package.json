@@ -8,8 +8,6 @@
     "build": "tsc --noEmit && vite build",
     "build:lib": "vite build --config vite.config.lib.ts",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:e2e": "node verify-fix.mjs",
     "eslint": "eslint . --ext .js,.cjs,.ts,.jsx,.tsx, --quiet --fix --ignore-path ./.gitignore",
     "prettier": "prettier . --loglevel warn --write './**/*.{js,jsx,ts,tsx,css,html,json}'",
     "stylelint": "stylelint ./**/*.{css,less,scss,sass} --fix",

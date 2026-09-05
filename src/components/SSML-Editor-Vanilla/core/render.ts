@@ -61,29 +61,6 @@ function scheduleIdle(task: () => void, timeoutMs: number): () => void {
   };
 }
 
-function groupKey<T>(
-  items: readonly T[],
-  idOf: (t: T) => string,
-  keyOf: (t: T) => string,
-): Map<string, string> {
-  const buckets = new Map<string, T[]>();
-  for (const it of items) {
-    const id = idOf(it);
-    let arr = buckets.get(id);
-    if (!arr) {
-      arr = [];
-      buckets.set(id, arr);
-    }
-    arr.push(it);
-  }
-  const out = new Map<string, string>();
-  for (const [id, arr] of buckets) {
-    arr.sort((a, b) => (keyOf(a) < keyOf(b) ? -1 : keyOf(a) > keyOf(b) ? 1 : 0));
-    out.set(id, arr.map(keyOf).join("\u0000"));
-  }
-  return out;
-}
-
 function annKeyOf(a: SSMLAnnotation): string {
   const attrs = Object.keys(a.attrs)
     .sort()
@@ -96,23 +73,11 @@ function hintKeyOf(h: ModelHint): string {
   return `${h.id}|${h.start}|${h.end}|${h.text}`;
 }
 
-function groupAnnotations(annotations: SSMLAnnotation[]): Map<string, string> {
-  return groupKey(annotations, (a) => a.blockId, annKeyOf);
-}
-
-function groupHints(hints: ModelHint[]): Map<string, string> {
-  return groupKey(hints, (h) => h.blockId, hintKeyOf);
-}
-
 export class RenderService {
   constructor(private ctx: EditorContext) {}
 
   /**
-   * Cached annotation/hint grouping maps.  Rebuilding them walks every
-   * annotation and hint in the document, which is wasted work when the only
-   * change since the last call was the cursor position — so the maps are
-   * reused until the underlying arrays change identity (the same identity
-   * rule renderBlocks already relies on for its own change detection).
+   * Cached annotation/hint grouping maps.
    */
   private annMapCache: {
     anns: SSMLAnnotation[];
@@ -259,6 +224,28 @@ export class RenderService {
     };
   }
 
+  /**
+   * Build one stable string per block from the only inputs that affect a
+   * block's VNode sequence: its text, its annotations and its hints.  This
+   * single map replaces the previous text/ann/hint maps and is the sole
+   * input used to decide which blocks need to be rebuilt.
+   */
+  private computeFingerprints(
+    model: SSMLModel,
+    annsByBlock: Map<string, SSMLAnnotation[]>,
+    hintsByBlock: Map<string, ModelHint[]>,
+  ): Map<string, string> {
+    const out = new Map<string, string>();
+    for (const block of model.blocks) {
+      const anns = annsByBlock.get(block.id) ?? [];
+      const hints = hintsByBlock.get(block.id) ?? [];
+      const annKey = anns.map(annKeyOf).sort().join("\u0000");
+      const hintKey = hints.map(hintKeyOf).sort().join("\u0000");
+      out.set(block.id, `${block.text}\u0000${annKey}\u0000${hintKey}`);
+    }
+    return out;
+  }
+
   renderBlocks(): void {
     const { ctx } = this;
     const model = ctx.state.model;
@@ -275,32 +262,22 @@ export class RenderService {
 
     const dirty = new Set<string>();
     const docChanged = ctx.state.render.paintedModel !== model;
-    let annGroups: Map<string, string> | null = null;
-    let hintGroups: Map<string, string> | null = null;
 
     if (docChanged) {
-      if (ctx.state.render.paintedAnnList !== model.annotations) {
-        annGroups = groupAnnotations(model.annotations);
-      }
-      if (ctx.state.render.paintedHintList !== (model.hints ?? null)) {
-        hintGroups = groupHints(model.hints ?? []);
-      }
-      const pt = ctx.state.render.paintedText!;
-      const pa = ctx.state.render.paintedAnn!;
-      const ph = ctx.state.render.paintedHints!;
+      const renderCtx = this.blockRenderCtx();
+      const fingerprints = this.computeFingerprints(
+        model,
+        renderCtx.annsByBlock,
+        renderCtx.hintsByBlock,
+      );
+      const prev = ctx.state.render.paintedFingerprints;
       for (const block of model.blocks) {
-        let changed = pt.get(block.id) !== block.text;
-        if (!changed && annGroups) {
-          changed = (pa.get(block.id) ?? "") !== (annGroups.get(block.id) ?? "");
-        }
-        if (!changed && hintGroups) {
-          changed = (ph.get(block.id) ?? "") !== (hintGroups.get(block.id) ?? "");
-        }
-        if (changed) {
+        if ((prev?.get(block.id) ?? "") !== (fingerprints.get(block.id) ?? "")) {
           dirty.add(block.id);
         }
-        pt.set(block.id, block.text);
       }
+      ctx.state.render.paintedFingerprints = fingerprints;
+      ctx.state.render.paintedModel = model;
     }
 
     const caret = ctx.state.cursor;
@@ -319,24 +296,6 @@ export class RenderService {
       for (const s of ctx.state.render.lastSelSpans) {
         dirty.add(s.blockId);
       }
-    }
-
-    if (docChanged) {
-      if (annGroups) {
-        const pa = ctx.state.render.paintedAnn!;
-        for (const block of model.blocks) {
-          pa.set(block.id, annGroups.get(block.id) ?? "");
-        }
-      }
-      if (hintGroups) {
-        const ph = ctx.state.render.paintedHints!;
-        for (const block of model.blocks) {
-          ph.set(block.id, hintGroups.get(block.id) ?? "");
-        }
-      }
-      ctx.state.render.paintedModel = model;
-      ctx.state.render.paintedAnnList = model.annotations;
-      ctx.state.render.paintedHintList = model.hints ?? null;
     }
 
     if (!docChanged && dirty.size === 0) {
@@ -403,9 +362,8 @@ export class RenderService {
       ctx.state.render.idlePaintCancel = null;
     }
     ctx.state.render.paintingChunks = true;
-    ctx.content.replaceChildren();
+    const staging = document.createDocumentFragment();
     const els = new Map<string, HTMLElement>();
-    const text = new Map<string, string>();
     const vnodesMap = new Map<string, VNode[]>();
     const domRefs = new Map<string, VNodeDomRefs>();
     const renderCtx = this.blockRenderCtx();
@@ -435,7 +393,6 @@ export class RenderService {
         p.append(...materializeVNodes(vns));
         frag.appendChild(p);
         els.set(block.id, p);
-        text.set(block.id, block.text);
         vnodesMap.set(block.id, vns);
         domRefs.set(block.id, buildBlockDomRefs(vns, p));
         i++;
@@ -448,7 +405,7 @@ export class RenderService {
         }
       }
       if (frag.childNodes.length > 0) {
-        ctx.content.appendChild(frag);
+        staging.appendChild(frag);
       }
 
       if (i < blocks.length) {
@@ -456,17 +413,18 @@ export class RenderService {
         return;
       }
 
+      ctx.content.replaceChildren(staging);
       ctx.state.render.paintingChunks = false;
       ctx.state.render.idlePaintCancel = null;
       ctx.state.render.paintedEls = els;
-      ctx.state.render.paintedText = text;
+      ctx.state.render.paintedFingerprints = this.computeFingerprints(
+        target,
+        renderCtx.annsByBlock,
+        renderCtx.hintsByBlock,
+      );
       ctx.state.render.paintedVNodes = vnodesMap;
       ctx.state.render.paintedDomRefs = domRefs;
-      ctx.state.render.paintedAnn = groupAnnotations(target.annotations);
-      ctx.state.render.paintedHints = groupHints(target.hints ?? []);
       ctx.state.render.paintedModel = target;
-      ctx.state.render.paintedAnnList = target.annotations;
-      ctx.state.render.paintedHintList = target.hints ?? null;
       ctx.state.render.paintedEmpty = false;
       ctx.state.render.forceFullRender = false;
       ctx.state.render.lastSelSpans = ctx.state.spans
@@ -491,12 +449,14 @@ export class RenderService {
       frag.appendChild(ph);
     }
     const els = new Map<string, HTMLElement>();
-    const text = new Map<string, string>();
     const vnodesMap = new Map<string, VNode[]>();
     const domRefs = new Map<string, VNodeDomRefs>();
-    const anns = groupAnnotations(model.annotations);
-    const hints = groupHints(model.hints ?? []);
     const renderCtx = this.blockRenderCtx();
+    const fingerprints = this.computeFingerprints(
+      model,
+      renderCtx.annsByBlock,
+      renderCtx.hintsByBlock,
+    );
     for (const block of model.blocks) {
       const vns = buildBlockVNodes(renderCtx, block);
       const p = document.createElement("p");
@@ -505,20 +465,15 @@ export class RenderService {
       p.append(...materializeVNodes(vns));
       frag.appendChild(p);
       els.set(block.id, p);
-      text.set(block.id, block.text);
       vnodesMap.set(block.id, vns);
       domRefs.set(block.id, buildBlockDomRefs(vns, p));
     }
     ctx.content.replaceChildren(frag);
     ctx.state.render.paintedEls = els;
-    ctx.state.render.paintedText = text;
+    ctx.state.render.paintedFingerprints = fingerprints;
     ctx.state.render.paintedVNodes = vnodesMap;
     ctx.state.render.paintedDomRefs = domRefs;
-    ctx.state.render.paintedAnn = anns;
-    ctx.state.render.paintedHints = hints;
     ctx.state.render.paintedModel = model;
-    ctx.state.render.paintedAnnList = model.annotations;
-    ctx.state.render.paintedHintList = model.hints ?? null;
     ctx.state.render.paintedEmpty = empty;
     ctx.state.render.forceFullRender = false;
     ctx.state.render.lastSelSpans = ctx.state.spans ? ctx.state.spans.map((s) => ({ ...s })) : null;
@@ -563,9 +518,7 @@ export class RenderService {
       if (!live.has(id)) {
         el.remove();
         els.delete(id);
-        ctx.state.render.paintedText!.delete(id);
-        ctx.state.render.paintedAnn!.delete(id);
-        ctx.state.render.paintedHints!.delete(id);
+        ctx.state.render.paintedFingerprints?.delete(id);
         paintedVNs?.delete(id);
         domRefs?.delete(id);
       }

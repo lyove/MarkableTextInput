@@ -5,7 +5,7 @@
 const HISTORY_LIMIT = 100;
 
 export interface HistoryApi<T> {
-  commit: (next: T, merge?: boolean) => void;
+  commit: (next: T, merge?: boolean, mergeKey?: string) => void;
   undo: () => void;
   redo: () => void;
   breakMerge: () => void;
@@ -17,6 +17,7 @@ export class History<T> implements HistoryApi<T> {
   private onChange: (v: T) => void;
   private value: T;
   private lastWasMerge = false;
+  private lastMergeKey: string | null = null;
 
   constructor(value: T, onChange: (v: T) => void) {
     this.value = value;
@@ -31,16 +32,23 @@ export class History<T> implements HistoryApi<T> {
     this.past = [];
     this.future = [];
     this.lastWasMerge = false;
+    this.lastMergeKey = null;
   }
 
-  commit(next: T, merge = false): void {
-    if (!merge || !this.lastWasMerge) {
+  /**
+   * Commit the next document snapshot
+   */
+  commit(next: T, merge = false, mergeKey?: string): void {
+    const canMerge =
+      merge && this.lastWasMerge && (mergeKey === undefined || this.lastMergeKey === mergeKey);
+    if (!canMerge) {
       this.past.push(this.value);
       if (this.past.length > HISTORY_LIMIT) {
         this.past.shift();
       }
     }
     this.lastWasMerge = merge;
+    this.lastMergeKey = merge ? mergeKey ?? null : null;
     this.future = [];
     this.value = next;
     this.onChange(next);
@@ -52,6 +60,7 @@ export class History<T> implements HistoryApi<T> {
       return;
     }
     this.lastWasMerge = false;
+    this.lastMergeKey = null;
     this.future.push(this.value);
     this.value = prev;
     this.onChange(prev);
@@ -63,6 +72,7 @@ export class History<T> implements HistoryApi<T> {
       return;
     }
     this.lastWasMerge = false;
+    this.lastMergeKey = null;
     this.past.push(this.value);
     this.value = next;
     this.onChange(next);
@@ -70,5 +80,6 @@ export class History<T> implements HistoryApi<T> {
 
   breakMerge(): void {
     this.lastWasMerge = false;
+    this.lastMergeKey = null;
   }
 }

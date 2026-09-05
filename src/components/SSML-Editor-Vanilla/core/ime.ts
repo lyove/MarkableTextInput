@@ -8,8 +8,13 @@ import { insertTextAtCursor, removeSpansFromModel } from "../utils/operations";
 import { getSelectionSpans } from "../utils/selection";
 import { buildBlockDomRefs, caretInsertionPoint, createCaretSpan } from "../view/block-render";
 
+const TYPING_SEPARATOR_RE = /[\s\p{P}\p{S}]/u;
+
 export class ImeService {
   constructor(private ctx: EditorContext) {}
+
+  private typingRunId = 0;
+  private lastTypingText = "";
 
   handleCompositionStart(e: CompositionEvent): void {
     const target = e.target as HTMLElement | null;
@@ -64,7 +69,7 @@ export class ImeService {
       }
       return;
     }
-    this.commitTextInsert(e.data);
+    this.commitTextInsert(e.data, true);
   }
 
   handleBeforeInput(e: InputEvent): void {
@@ -93,25 +98,47 @@ export class ImeService {
     }
   }
 
+  private isTypingSeparator(ch: string): boolean {
+    return !!ch && TYPING_SEPARATOR_RE.test(ch);
+  }
+
+  private typingMergeKey(text: string, fromComposition: boolean): string {
+    if (fromComposition) {
+      this.typingRunId += 1;
+      this.lastTypingText = text;
+      return `typing:${this.typingRunId}`;
+    }
+    const first = Array.from(text)[0] ?? "";
+    const prevLast = Array.from(this.lastTypingText).pop() ?? "";
+    const startsNewWord =
+      first !== "" && this.isTypingSeparator(prevLast) && !this.isTypingSeparator(first);
+    if (this.lastTypingText === "" || startsNewWord) {
+      this.typingRunId += 1;
+    }
+    this.lastTypingText = text;
+    return `typing:${this.typingRunId}`;
+  }
+
   /**
    * Insert plain text (typed characters, an IME result, or the input-event
    * fallback) at the current caret — replacing any active selection — then
    * move the caret past it and repaint.  Single mutation path shared by
    * beforeinput, the input fallback and compositionend.
    */
-  commitTextInsert(text: string): void {
+  commitTextInsert(text: string, fromComposition = false): void {
     const { ctx } = this;
     const codePoints = Array.from(text).length;
     const spans = ctx.state.spans && ctx.state.spans.length > 0 ? ctx.state.spans : null;
     let next: SSMLModel;
     let cursor: Cursor;
-    let merge = false;
     if (spans) {
       const anchorRaw: Cursor = { blockId: spans[0].blockId, idx: spans[0].start };
       next = removeSpansFromModel(ctx.state.model, spans);
       const anchor = sanitizeCursor(next, anchorRaw) ?? anchorRaw;
       next = insertTextAtCursor(next, anchor, text);
       cursor = { blockId: anchor.blockId, idx: anchor.idx + codePoints };
+      this.lastTypingText = "";
+      ctx.history.commit(next);
     } else {
       const c = ctx.state.cursor;
       let target = c ? sanitizeCursor(ctx.state.model, c) : null;
@@ -127,9 +154,8 @@ export class ImeService {
         next = { blocks: [block], annotations: [] };
         cursor = { blockId: block.id, idx: codePoints };
       }
-      merge = true;
+      ctx.history.commit(next, true, this.typingMergeKey(text, fromComposition));
     }
-    ctx.history.commit(next, merge);
     ctx.bus.emit("cursor:change", cursor);
     ctx.state.composingText = "";
     ctx.bus.emit("overlay:close");
@@ -138,11 +164,7 @@ export class ImeService {
   }
 
   /**
-   * Empty the hidden IME host and collapse the native selection to a caret
-   * INSIDE it.  The host is an invisible keystroke / IME sink; after a
-   * committed edit its text must be wiped, but a contenteditable without a
-   * selection range stops delivering input events in WebKit.  Popover
-   * editors live outside this container, so this never touches them.
+   * Empty the hidden IME host and collapse the native selection to a caret INSIDE it.
    */
   resetHostCaret(): void {
     const host = this.ctx.inputHost;

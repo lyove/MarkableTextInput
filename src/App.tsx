@@ -242,7 +242,7 @@ function VanillaEditorSection() {
 // React wrapper demo
 // ---------------------------------------------------------------------------
 
-function ReactEditorSection() {
+export function ReactEditorSection() {
   const editorRef = useRef<SSMLEditorRef>(null);
 
   const [value, setValue] = useState<SSMLEditorValue>(SSML_SAMPLE);
