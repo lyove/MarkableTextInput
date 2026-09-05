@@ -3,8 +3,9 @@
  */
 import type { EditorContext } from "./context";
 import type { Cursor } from "../types";
-import { blockLen } from "../model/model";
+import { blockLen, uid } from "../model/model";
 import { getSelectionSpans, spansEqual } from "../utils/selection";
+import { isEmptyModel } from "../utils/serialize";
 
 export class SelectionService {
   constructor(private ctx: EditorContext) {}
@@ -420,6 +421,18 @@ export class SelectionService {
 
   placeCaretFromPoint(x: number, y: number): void {
     const { ctx } = this;
+    if (isEmptyModel(ctx.state.model)) {
+      const blockId = uid();
+      ctx.state.model = {
+        ...ctx.state.model,
+        blocks: [{ id: blockId, text: "" }],
+      };
+      ctx.bus.emit("cursor:change", { blockId, idx: 0 });
+      ctx.state.flags.pointerDown = true;
+      ctx.ime.cancelCaretRender();
+      ctx.bus.emit("render:request", { dirty: true });
+      return;
+    }
     const range = this.caretRangeFromPoint(x, y);
     if (!range || !ctx.container.contains(range.commonAncestorContainer)) {
       return;
