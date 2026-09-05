@@ -17,7 +17,7 @@ export function plainToModel(text: string): SSMLModel {
 
 /** Empty model */
 export function createEmptyModel(): SSMLModel {
-  return { blocks: [], annotations: [] };
+  return { blocks: [], annotations: [], hints: [] };
 }
 
 /** Whether the model has no visible text */
@@ -30,6 +30,6 @@ export function cloneModel(model: SSMLModel): SSMLModel {
   return {
     blocks: model.blocks.map((b) => ({ ...b })),
     annotations: model.annotations.map((a) => ({ ...a, attrs: { ...a.attrs } })),
-    ...(model.hints ? { hints: model.hints.map((h) => ({ ...h })) } : {}),
+    hints: model.hints.map((h) => ({ ...h })),
   };
 }

@@ -40,7 +40,7 @@ export function createModelFromText(text: string): SSMLModel {
     .map((line) => line.replace(/\s+$/, ""))
     .filter((line) => line.length > 0)
     .map((line) => ({ id: createBlockId(), text: line }));
-  return { blocks, annotations: [] };
+  return { blocks, annotations: [], hints: [] };
 }
 
 /** Code point length of a block */

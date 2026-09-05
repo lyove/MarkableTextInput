@@ -3,7 +3,7 @@
  */
 import type { AnnotationType, ModelHint, SSMLAnnotation, SSMLBlock } from "../types";
 import { inSel } from "../utils/selection";
-import { defaultPinyinFormats } from "../utils/pinyin";
+import { defaultPinyinFormatsForText } from "../utils/pinyin";
 import { rangeFeatureEnabled, type BlockRenderCtx, type BracketSlot } from "./block-render";
 
 // ---------------------------------------------------------------------------
@@ -145,7 +145,7 @@ export function buildBlockVNodes(ctx: BlockRenderCtx, block: SSMLBlock): VNode[]
 
   const autoReadings =
     ctx.Features.phoneme.enabled && ctx.Features.phoneme.showAll
-      ? Array.from(block.text).map((c) => defaultPinyinFormats(c))
+      ? defaultPinyinFormatsForText(block.text)
       : null;
 
   // Bracket system
@@ -562,7 +562,47 @@ export function diffBlockChildren(prev: VNode[], next: VNode[], parent: HTMLElem
       return;
     }
   }
-  parent.replaceChildren(...materializeVNodes(next));
+
+  const children = Array.from(parent.children).filter(
+    (el): el is HTMLElement => el instanceof HTMLElement,
+  );
+  const prevElByKey = new Map<string, HTMLElement>();
+  const prevVNodeByKey = new Map<string, VNode>();
+  for (let i = 0; i < prev.length; i++) {
+    const key = vnodeKey(prev[i]);
+    const el = children[i];
+    if (el) {
+      prevElByKey.set(key, el);
+      prevVNodeByKey.set(key, prev[i]);
+    }
+  }
+
+  const used = new Set<string>();
+  const nextEls: HTMLElement[] = [];
+  for (const nextVNode of next) {
+    const key = vnodeKey(nextVNode);
+    let el = prevElByKey.get(key);
+    if (el && !used.has(key)) {
+      used.add(key);
+      const prevVNode = prevVNodeByKey.get(key);
+      if (prevVNode) {
+        patchVNode(prevVNode, nextVNode, el);
+      }
+    } else {
+      el = materializeVNode(nextVNode) as HTMLElement;
+    }
+    nextEls.push(el);
+  }
+
+  const nextElSet = new Set(nextEls);
+  for (const oldEl of children) {
+    if (!nextElSet.has(oldEl)) {
+      oldEl.remove();
+    }
+  }
+  for (const el of nextEls) {
+    parent.appendChild(el);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -583,13 +623,11 @@ export function caretRefFromVNodes(blockEl: HTMLElement, vnodes: VNode[]): Caret
   for (let i = 0; i < vnodes.length; i++) {
     const vn = vnodes[i];
 
-    // Caret at top level
     if (vn.type === "caret") {
       const ref = nextDomSibling(vnodes, i + 1, blockEl);
       return { parent: blockEl, refNode: ref };
     }
 
-    // Caret inside a hint group
     if (vn.type === "hint-group") {
       const groupEl = blockEl.querySelector<HTMLElement>(
         `.se-hint-group[data-hint-start="${vn.start}"]`,
@@ -610,7 +648,7 @@ export function caretRefFromVNodes(blockEl: HTMLElement, vnodes: VNode[]): Caret
 /**
  * Locate where `buildBlockVNodes` would place the caret for char offset `idx`
  * by walking an ALREADY-BUILT vnode list (the cached per-block array) instead
- * of rebuilding one. 
+ * of rebuilding one.
  */
 export interface CaretInsertion {
   /** Child list receiving the caret: block top level or hint-group children. */

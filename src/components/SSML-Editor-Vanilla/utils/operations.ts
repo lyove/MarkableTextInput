@@ -95,8 +95,8 @@ export function insertTextAtCursor(model: SSMLModel, cursor: Cursor, text: strin
     text: [...chars.slice(0, cursor.idx), ...Array.from(text), ...chars.slice(cursor.idx)].join(""),
   };
   const annotations = shiftOnInsert(model.annotations, cursor.blockId, cursor.idx, len);
-  const hints = shiftHintsOnInsert(model.hints ?? [], cursor.blockId, cursor.idx, len);
-  return { blocks, annotations, ...(hints.length ? { hints } : {}) };
+  const hints = shiftHintsOnInsert(model.hints, cursor.blockId, cursor.idx, len);
+  return { blocks, annotations, hints };
 }
 
 /** Delete one char before (backward) or after the caret; merges blocks at edges */
@@ -120,9 +120,9 @@ export function deleteAtCursor(
         text: [...chars.slice(0, cursor.idx - 1), ...chars.slice(cursor.idx)].join(""),
       };
       const annotations = shiftOnDelete(model.annotations, block.id, cursor.idx - 1, cursor.idx);
-      const hints = shiftHintsOnDelete(model.hints ?? [], block.id, cursor.idx - 1, cursor.idx);
+      const hints = shiftHintsOnDelete(model.hints, block.id, cursor.idx - 1, cursor.idx);
       return {
-        model: { blocks, annotations, ...(hints.length ? { hints } : {}) },
+        model: { blocks, annotations, hints },
         cursor: { ...cursor, idx: cursor.idx - 1 },
       };
     }
@@ -134,9 +134,9 @@ export function deleteAtCursor(
     const blocks = [...model.blocks];
     blocks.splice(bi - 1, 2, { id: prev.id, text: prev.text + block.text });
     const annotations = shiftOnMerge(model.annotations, block.id, prev.id, prevLen);
-    const hints = shiftHintsOnMerge(model.hints ?? [], block.id, prev.id, prevLen);
+    const hints = shiftHintsOnMerge(model.hints, block.id, prev.id, prevLen);
     return {
-      model: { blocks, annotations, ...(hints.length ? { hints } : {}) },
+      model: { blocks, annotations, hints },
       cursor: { blockId: prev.id, idx: prevLen },
     };
   }
@@ -149,8 +149,8 @@ export function deleteAtCursor(
       text: [...chars.slice(0, cursor.idx), ...chars.slice(cursor.idx + 1)].join(""),
     };
     const annotations = shiftOnDelete(model.annotations, block.id, cursor.idx, cursor.idx + 1);
-    const hints = shiftHintsOnDelete(model.hints ?? [], block.id, cursor.idx, cursor.idx + 1);
-    return { model: { blocks, annotations, ...(hints.length ? { hints } : {}) }, cursor };
+    const hints = shiftHintsOnDelete(model.hints, block.id, cursor.idx, cursor.idx + 1);
+    return { model: { blocks, annotations, hints }, cursor };
   }
   if (bi >= model.blocks.length - 1) {
     return null;
@@ -159,8 +159,8 @@ export function deleteAtCursor(
   const blocks = [...model.blocks];
   blocks.splice(bi, 2, { id: block.id, text: block.text + next.text });
   const annotations = shiftOnMerge(model.annotations, next.id, block.id, len);
-  const hints = shiftHintsOnMerge(model.hints ?? [], next.id, block.id, len);
-  return { model: { blocks, annotations, ...(hints.length ? { hints } : {}) }, cursor };
+  const hints = shiftHintsOnMerge(model.hints, next.id, block.id, len);
+  return { model: { blocks, annotations, hints }, cursor };
 }
 
 /** Split the block at the caret (Enter key) */
@@ -186,9 +186,9 @@ export function splitBlockAtCursor(
     },
   );
   const annotations = shiftOnSplit(model.annotations, block.id, rightId, cursor.idx);
-  const hints = shiftHintsOnSplit(model.hints ?? [], block.id, rightId, cursor.idx);
+  const hints = shiftHintsOnSplit(model.hints, block.id, rightId, cursor.idx);
   return {
-    model: { blocks, annotations, ...(hints.length ? { hints } : {}) },
+    model: { blocks, annotations, hints },
     cursor: { blockId: rightId, idx: 0 },
   };
 }
@@ -196,7 +196,7 @@ export function splitBlockAtCursor(
 /** Remove a set of in-block ranges (selection delete / cut) */
 export function removeSpansFromModel(model: SSMLModel, spans: SelectionSpan[]): SSMLModel {
   let next = model;
-  let hints = model.hints ?? [];
+  let hints = model.hints;
   for (const sp of spans) {
     const bi = next.blocks.findIndex((b) => b.id === sp.blockId);
     if (bi < 0) {
@@ -216,10 +216,10 @@ export function removeSpansFromModel(model: SSMLModel, spans: SelectionSpan[]): 
     };
     const annotations = shiftOnDelete(next.annotations, sp.blockId, s, e);
     hints = shiftHintsOnDelete(hints, sp.blockId, s, e);
-    next = { blocks, annotations, ...(hints.length ? { hints } : {}) };
+    next = { blocks, annotations, hints };
   }
   if (next !== model && next.blocks.length > 1 && next.blocks.every((b) => b.text.length === 0)) {
-    return { blocks: [{ id: next.blocks[0].id, text: "" }], annotations: [] };
+    return { blocks: [{ id: next.blocks[0].id, text: "" }], annotations: [], hints: [] };
   }
   return next;
 }
@@ -243,9 +243,9 @@ export function extractModelSpans(model: SSMLModel, spans: SelectionSpan[]): SSM
     const newId = createBlockId();
     blocks.push({ id: newId, text: chars.slice(s, e).join("") });
     carryCopied(model.annotations, sp.blockId, s, e, newId, annotations);
-    carryCopied(model.hints ?? [], sp.blockId, s, e, newId, hints);
+    carryCopied(model.hints, sp.blockId, s, e, newId, hints);
   }
-  return { blocks, annotations, ...(hints.length > 0 ? { hints } : {}) };
+  return { blocks, annotations, hints };
 }
 
 interface InsertModelResult {
@@ -285,14 +285,14 @@ function insertModelAtImpl(
         idMap.has(a.blockId) ? { ...a, id: uid(), blockId: idMap.get(a.blockId)! } : null,
       )
       .filter((a): a is SSMLAnnotation => a !== null);
-    const hints = (pasted.hints ?? [])
+    const hints = pasted.hints
       .map((h) =>
         idMap.has(h.blockId) ? { ...h, id: uid(), blockId: idMap.get(h.blockId)! } : null,
       )
       .filter((h): h is ModelHint => h !== null);
     const last = blocks[blocks.length - 1];
     return {
-      model: { blocks, annotations, ...(hints.length ? { hints } : {}) },
+      model: { blocks, annotations, hints },
       cursor: { blockId: last.id, idx: blockLen(last) },
     };
   }
@@ -319,15 +319,15 @@ function insertModelAtImpl(
       ...tail,
     ];
     const annotations = reanchorOnInsertSingle(model.annotations, blockId, newId, idx, pastedLen);
-    const hints = reanchorHintsOnInsertSingle(model.hints ?? [], blockId, newId, idx, pastedLen);
+    const hints = reanchorHintsOnInsertSingle(model.hints, blockId, newId, idx, pastedLen);
     carryPasted(pasted.annotations, annotations, (a) =>
       a.blockId === p.id ? { blockId: newId, start: a.start + idx, end: a.end + idx } : null,
     );
-    carryPasted(pasted.hints ?? [], hints, (h) =>
+    carryPasted(pasted.hints, hints, (h) =>
       h.blockId === p.id ? { blockId: newId, start: h.start + idx, end: h.end + idx } : null,
     );
     return {
-      model: { blocks, annotations, ...(hints.length ? { hints } : {}) },
+      model: { blocks, annotations, hints },
       cursor: { blockId: newId, idx: idx + pastedLen },
     };
   }
@@ -356,7 +356,7 @@ function insertModelAtImpl(
     idx,
     lastLen,
   );
-  const hints = reanchorHintsOnInsertMulti(model.hints ?? [], blockId, firstId, lastId, idx, lastLen);
+  const hints = reanchorHintsOnInsertMulti(model.hints, blockId, firstId, lastId, idx, lastLen);
   carryPasted(pasted.annotations, annotations, (a) => {
     const mappedBlockId = idMap.get(a.blockId);
     if (!mappedBlockId) {
@@ -369,7 +369,7 @@ function insertModelAtImpl(
       end: inFirst ? a.end + idx : a.end,
     };
   });
-  carryPasted(pasted.hints ?? [], hints, (h) => {
+  carryPasted(pasted.hints, hints, (h) => {
     const mappedBlockId = idMap.get(h.blockId);
     if (!mappedBlockId) {
       return null;
@@ -382,13 +382,18 @@ function insertModelAtImpl(
     };
   });
   return {
-    model: { blocks, annotations, ...(hints.length ? { hints } : {}) },
+    model: { blocks, annotations, hints },
     cursor: { blockId: lastId, idx: lastLen },
   };
 }
 
 /** Insert a pasted document (possibly multi-block) at a position */
-export function insertModelAt(model: SSMLModel, blockId: string, idx: number, pasted: SSMLModel): SSMLModel {
+export function insertModelAt(
+  model: SSMLModel,
+  blockId: string,
+  idx: number,
+  pasted: SSMLModel,
+): SSMLModel {
   return insertModelAtImpl(model, blockId, idx, pasted).model;
 }
 
@@ -409,7 +414,7 @@ export function setBlockHint(
   end: number,
   text: string,
 ): SSMLModel {
-  const hints = (model.hints ?? []).filter(
+  const hints = model.hints.filter(
     (h) => !(h.blockId === blockId && h.start === start && h.end === end),
   );
   if (text.length > 0) {
@@ -424,7 +429,7 @@ export function findHint(
   start: number,
   end: number,
 ): ModelHint | null {
-  for (const h of model.hints ?? []) {
+  for (const h of model.hints) {
     if (h.blockId === blockId && h.start === start && h.end === end) {
       return h;
     }

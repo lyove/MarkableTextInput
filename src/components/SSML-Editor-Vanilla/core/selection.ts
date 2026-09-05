@@ -9,6 +9,23 @@ import { getSelectionSpans, spansEqual } from "../utils/selection";
 export class SelectionService {
   constructor(private ctx: EditorContext) {}
 
+  private hostPosRafId = 0;
+
+  /**
+   * rAF-throttled variant of `positionInputHostToCursor` for global
+   * scroll/resize listeners: each captured event schedules at most one
+   * layout pass per frame instead of querying rects on every scroll event.
+   */
+  scheduleInputHostPosition(): void {
+    if (this.hostPosRafId) {
+      return;
+    }
+    this.hostPosRafId = requestAnimationFrame(() => {
+      this.hostPosRafId = 0;
+      this.positionInputHostToCursor();
+    });
+  }
+
   positionInputHostToCursor(): void {
     const { ctx } = this;
     const host = ctx.inputHost;
@@ -424,7 +441,9 @@ export class SelectionService {
       )?.closest<HTMLElement>("[data-block-id]") ?? null;
     const target = host ?? ctx.container.querySelector<HTMLElement>("[data-block-id]:last-of-type");
     if (target) {
-      const block = ctx.state.model.blocks.find((b) => b.id === target.getAttribute("data-block-id"));
+      const block = ctx.state.model.blocks.find(
+        (b) => b.id === target.getAttribute("data-block-id"),
+      );
       this.commitCursor({
         blockId: target.getAttribute("data-block-id") ?? "",
         idx: block ? blockLen(block) : 0,

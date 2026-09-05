@@ -81,7 +81,7 @@ export interface SSMLAnnotation {
 export interface SSMLModel {
   blocks: SSMLBlock[];
   annotations: SSMLAnnotation[];
-  hints?: ModelHint[];
+  hints: ModelHint[];
 }
 
 /**

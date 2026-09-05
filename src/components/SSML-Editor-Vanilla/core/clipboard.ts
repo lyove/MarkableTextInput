@@ -5,7 +5,11 @@
 import type { EditorContext } from "./context";
 import type { Cursor, SSMLModel } from "../types";
 import { blockLen, createBlockId, sanitizeCursor } from "../model/model";
-import { extractModelSpans, insertModelAtWithCursor, removeSpansFromModel } from "../utils/operations";
+import {
+  extractModelSpans,
+  insertModelAtWithCursor,
+  removeSpansFromModel,
+} from "../utils/operations";
 import { modelToSSML, ssmlToModel } from "../utils/ssml";
 
 let docClipboardText: string | null = null;
@@ -166,6 +170,7 @@ export class ClipboardService {
         return {
           blocks: lines.map((l) => ({ id: createBlockId(), text: l })),
           annotations: [],
+          hints: [],
         };
       }
     }

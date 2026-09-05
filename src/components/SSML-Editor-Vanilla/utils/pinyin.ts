@@ -61,6 +61,34 @@ export function defaultPinyinFormats(char: string): { val: string; tone: string 
   return pinyinFormats(letters, tone);
 }
 
+/**
+ * Batch conversion for a whole block.  One pinyin-pro call gives the
+ * context-aware default reading for every Han char in the string; long blocks
+ * no longer pay one pinyin-pro call per char for `showAll` ruby rendering.
+ */
+export function defaultPinyinFormatsForText(
+  text: string,
+): ({ val: string; tone: string } | null)[] {
+  const chars = Array.from(text);
+  if (chars.length === 0) {
+    return [];
+  }
+  let readings: string[];
+  try {
+    readings = pinyin(text, { toneType: "symbol", type: "array" }) as string[];
+  } catch {
+    readings = chars;
+  }
+  return chars.map((char, i) => {
+    if (!isHan(char)) {
+      return null;
+    }
+    const raw = readings[i] ?? readingsOf(char)[0] ?? char;
+    const { letters, tone } = parsePinyin(raw);
+    return pinyinFormats(letters, tone);
+  });
+}
+
 export const pinyinEngine: PinyinEngine = {
   convert(text) {
     const chars = Array.from(text);

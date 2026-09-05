@@ -142,7 +142,7 @@ export class SSMLEditor implements EditorContext {
         this.bus.emit("render:request", { dirty: false });
       }
     };
-    this.boundScroll = () => this.selection.positionInputHostToCursor();
+    this.boundScroll = () => this.selection.scheduleInputHostPosition();
     this.boundMouseUp = (e: MouseEvent) => this.ime.onPointerUp(e);
     this.boundWindowBlur = () => this.ime.finalizePointerGesture();
     this.boundDocMouseDown = (e: MouseEvent) => this.ime.abandonIfExternalPress(e);
@@ -209,8 +209,8 @@ export class SSMLEditor implements EditorContext {
     return cloneModel(this.state.model);
   }
 
-  getSSML(): string {
-    return modelToSSML(this.state.model);
+  getSSML(options?: { includeHints?: boolean }): string {
+    return modelToSSML(this.state.model, options);
   }
 
   setSSML(xml: string): void {

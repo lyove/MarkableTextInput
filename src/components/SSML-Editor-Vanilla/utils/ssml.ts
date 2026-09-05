@@ -17,6 +17,10 @@ import { modelToPlain } from "./serialize";
 
 const clampInt = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(v, hi));
 
+export interface SSMLSerializeOptions {
+  includeHints?: boolean;
+}
+
 function escapeXml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -188,7 +192,7 @@ export function valueToModel(value: SSMLEditorValue): SSMLModel {
   if (typeof value === "string") {
     const trimmed = value.trim();
     if (!trimmed) {
-      return { blocks: [], annotations: [] };
+      return { blocks: [], annotations: [], hints: [] };
     }
     return ssmlToModel(value);
   }
@@ -203,25 +207,29 @@ export function ssmlToPlain(xml: string): string {
 }
 
 /**
- * Model -> SSML string. Hints are emitted as the custom <hint text="..."> tag
- * (round-trips with ssmlToModel). Hints are folded into the block's range
- * annotations so the same open/close event stack orders them correctly against
- * the standard range tags.
+ * Model -> SSML string.
+ *
+ * By default the output is strict standard SSML: editor-only hints are not
+ * emitted.  Pass `{ includeHints: true }` when the custom <hint> tag is needed
+ * for a lossless internal round-trip; `ssmlToModel` still parses that legacy
+ * extension so previously serialized documents keep loading.
  */
-export function modelToSSML(model: SSMLModel): string {
+export function modelToSSML(model: SSMLModel, options?: SSMLSerializeOptions): string {
+  const includeHints = options?.includeHints ?? false;
   const parts = model.blocks.map((block) => {
     const anns = model.annotations.filter((a) => a.blockId === block.id);
-    const hintAnns: SSMLAnnotation[] = (model.hints ?? [])
-      .filter((h) => h.blockId === block.id && h.end > h.start)
-      .map((h) => ({
-        id: h.id,
-        // "hint" is not a real AnnotationType; the TAG_SPECS.hint entry emits it.
-        type: "hint" as SSMLAnnotation["type"],
-        blockId: h.blockId,
-        start: h.start,
-        end: h.end,
-        attrs: { text: h.text },
-      }));
+    const hintAnns: SSMLAnnotation[] = includeHints
+      ? model.hints
+          .filter((h) => h.blockId === block.id && h.end > h.start)
+          .map((h) => ({
+            id: h.id,
+            type: "hint" as SSMLAnnotation["type"],
+            blockId: h.blockId,
+            start: h.start,
+            end: h.end,
+            attrs: { text: h.text },
+          }))
+      : [];
     return `<p>${blockToSSML(block, [...anns, ...hintAnns])}</p>`;
   });
   return `<speak>${parts.join("")}</speak>`;
@@ -511,6 +519,6 @@ export function ssmlToModel(xml: string): SSMLModel {
   return {
     blocks: liveBlocks,
     annotations: normalizeRangeNesting(cleaned),
-    ...(cleanedHints.length > 0 ? { hints: cleanedHints } : {}),
+    hints: cleanedHints,
   };
 }

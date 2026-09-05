@@ -151,7 +151,7 @@ export class ImeService {
         cursor = { ...target, idx: target.idx + codePoints };
       } else {
         const block: SSMLBlock = { id: createBlockId(), text };
-        next = { blocks: [block], annotations: [] };
+        next = { blocks: [block], annotations: [], hints: [] };
         cursor = { blockId: block.id, idx: codePoints };
       }
       ctx.history.commit(next, true, this.typingMergeKey(text, fromComposition));

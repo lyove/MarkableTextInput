@@ -86,6 +86,8 @@ export class RenderService {
     hintsByBlock: Map<string, ModelHint[]>;
   } | null = null;
 
+  private floatSignature = "";
+
   ensureFloatLayer(): HTMLDivElement {
     if (!this.ctx.state.render.floatLayer) {
       const fl = document.createElement("div");
@@ -182,7 +184,7 @@ export class RenderService {
 
   blockRenderCtx(): BlockRenderCtx {
     const model = this.ctx.state.model;
-    const hints = model.hints ?? [];
+    const hints = model.hints;
     let maps = this.annMapCache;
     if (!maps || maps.anns !== model.annotations || maps.hints !== hints) {
       const annsByBlock = new Map<string, SSMLAnnotation[]>();
@@ -564,8 +566,37 @@ export class RenderService {
     }
   }
 
+  private currentFloatSignature(): string {
+    const o = this.ctx.state.overlays;
+    const bracket = o.bracketTooltip;
+    const hint = o.hoveredHint;
+    const overlap = o.overlapPrompt;
+    const cross = o.crossBoundaryPrompt;
+    return [
+      bracket ? `bracket:${bracket.ann.id}` : "",
+      hint
+        ? `hint:${hint.text}:${hint.el.getAttribute("data-block-id") ?? ""}:${hint.el.isConnected}`
+        : "",
+      overlap
+        ? `overlap:${overlap.type}:${overlap.blockId}:${overlap.start}:${
+            overlap.end
+          }:${JSON.stringify(overlap.attrs)}:${overlap.conflicts.map((c) => c.id).join(",")}`
+        : "",
+      cross
+        ? `cross:${cross.type}:${cross.start}:${cross.end}:${cross.existing
+            .map((c) => c.id)
+            .join(",")}`
+        : "",
+    ].join("|");
+  }
+
   renderFloating(): void {
     const { ctx } = this;
+    const signature = this.currentFloatSignature();
+    if (signature === this.floatSignature && ctx.state.render.floatLayer) {
+      return;
+    }
+    this.floatSignature = signature;
     const fl = this.ensureFloatLayer();
     fl.replaceChildren();
 

@@ -12,9 +12,7 @@ export class DomService {
     const cls = [
       "se-editor",
       "se-vanilla",
-      this.ctx.Features.phoneme.toneFormat === "number"
-        ? "se-tone-number"
-        : "se-tone-symbol",
+      this.ctx.Features.phoneme.toneFormat === "number" ? "se-tone-number" : "se-tone-symbol",
       this.ctx.readOnly ? "se-input-readonly" : "",
       this.ctx.state.focused ? "se-focused" : "",
       this.ctx.className,
@@ -72,8 +70,8 @@ export class DomService {
     ctx.content.addEventListener("mouseover", ctx.boundContentMouseOver);
     ctx.content.addEventListener("mouseout", ctx.boundContentMouseOut);
     document.addEventListener("selectionchange", ctx.boundSelectionChange);
-    window.addEventListener("resize", ctx.boundScroll);
-    window.addEventListener("scroll", ctx.boundScroll, true);
+    window.addEventListener("resize", ctx.boundScroll, { passive: true });
+    window.addEventListener("scroll", ctx.boundScroll, { capture: true, passive: true });
     window.addEventListener("mouseup", ctx.boundMouseUp, true);
     window.addEventListener("mousemove", ctx.boundMouseMove, true);
     window.addEventListener("blur", ctx.boundWindowBlur);
@@ -105,7 +103,7 @@ export class DomService {
     ctx.content.removeEventListener("mouseout", ctx.boundContentMouseOut);
     document.removeEventListener("selectionchange", ctx.boundSelectionChange);
     window.removeEventListener("resize", ctx.boundScroll);
-    window.removeEventListener("scroll", ctx.boundScroll, true);
+    window.removeEventListener("scroll", ctx.boundScroll, { capture: true });
     window.removeEventListener("mouseup", ctx.boundMouseUp, true);
     window.removeEventListener("mousemove", ctx.boundMouseMove, true);
     window.removeEventListener("blur", ctx.boundWindowBlur);

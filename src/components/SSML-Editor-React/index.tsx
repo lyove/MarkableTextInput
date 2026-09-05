@@ -10,24 +10,9 @@
  *     features={{ phoneme: true, break: true, prosody: true }}
  *   />
  */
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  type CSSProperties,
-} from "react";
-import {
-  SSMLEditor as VanillaSSMLEditor,
-  modelToSSML,
-  valueToModel,
-} from "../SSML-Editor-Vanilla";
-import type {
-  AnnotationFeatures,
-  SSMLModel,
-  SSMLEditorValue,
-} from "../SSML-Editor-Vanilla";
-
+import { forwardRef, useEffect, useImperativeHandle, useRef, type CSSProperties } from "react";
+import { SSMLEditor as VanillaSSMLEditor, modelToSSML, valueToModel } from "../SSML-Editor-Vanilla";
+import type { AnnotationFeatures, SSMLModel, SSMLEditorValue } from "../SSML-Editor-Vanilla";
 
 export {
   ssmlToModel,
@@ -93,16 +78,7 @@ export interface SSMLEditorRef {
 }
 
 export const SSMLEditor = forwardRef<SSMLEditorRef, SSMLEditorProps>(function SSMLEditor(
-  {
-    value,
-    onChange,
-    onSSMLChange,
-    readOnly = false,
-    placeholder,
-    className,
-    style,
-    features,
-  },
+  { value, onChange, onSSMLChange, readOnly = false, placeholder, className, style, features },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -110,7 +86,7 @@ export const SSMLEditor = forwardRef<SSMLEditorRef, SSMLEditorProps>(function SS
   const appliedSSMLRef = useRef<string>("");
   const onChangeRef = useRef(onChange);
   const onSSMLChangeRef = useRef(onSSMLChange);
-  
+
   onChangeRef.current = onChange;
   onSSMLChangeRef.current = onSSMLChange;
 
@@ -125,7 +101,7 @@ export const SSMLEditor = forwardRef<SSMLEditorRef, SSMLEditorProps>(function SS
       value,
       onChange: (model) => {
         const ssml = modelToSSML(model);
-        appliedSSMLRef.current = ssml;
+        appliedSSMLRef.current = modelToSSML(model, { includeHints: true });
         onSSMLChangeRef.current?.(ssml);
         onChangeRef.current?.(model);
       },
@@ -134,7 +110,7 @@ export const SSMLEditor = forwardRef<SSMLEditorRef, SSMLEditorProps>(function SS
       features,
     });
     editorRef.current = editor;
-    appliedSSMLRef.current = modelToSSML(valueToModel(value));
+    appliedSSMLRef.current = modelToSSML(valueToModel(value), { includeHints: true });
 
     return () => {
       editor.destroy();
@@ -148,7 +124,7 @@ export const SSMLEditor = forwardRef<SSMLEditorRef, SSMLEditorProps>(function SS
     if (!editor) {
       return;
     }
-    const incomingSSML = modelToSSML(valueToModel(value));
+    const incomingSSML = modelToSSML(valueToModel(value), { includeHints: true });
     if (incomingSSML === appliedSSMLRef.current) {
       return;
     }
@@ -169,7 +145,7 @@ export const SSMLEditor = forwardRef<SSMLEditorRef, SSMLEditorProps>(function SS
   useImperativeHandle(
     ref,
     () => ({
-      getValue: () => editorRef.current?.getValue() ?? { blocks: [], annotations: [] },
+      getValue: () => editorRef.current?.getValue() ?? { blocks: [], annotations: [], hints: [] },
       getSSML: () => editorRef.current?.getSSML() ?? "",
       setValue: (v) => {
         const ed = editorRef.current;
@@ -177,7 +153,7 @@ export const SSMLEditor = forwardRef<SSMLEditorRef, SSMLEditorProps>(function SS
           return;
         }
         ed.setValue(v);
-        appliedSSMLRef.current = modelToSSML(valueToModel(v));
+        appliedSSMLRef.current = modelToSSML(valueToModel(v), { includeHints: true });
       },
       setSSML: (xml) => {
         const ed = editorRef.current;
@@ -185,7 +161,7 @@ export const SSMLEditor = forwardRef<SSMLEditorRef, SSMLEditorProps>(function SS
           return;
         }
         ed.setSSML(xml);
-        appliedSSMLRef.current = modelToSSML(valueToModel(xml));
+        appliedSSMLRef.current = modelToSSML(valueToModel(xml), { includeHints: true });
       },
       focus: () => editorRef.current?.focus(),
       getEditor: () => editorRef.current,

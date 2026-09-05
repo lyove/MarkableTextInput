@@ -2,8 +2,15 @@
  * SSMLEditor — framework-agnostic entry point.
  */
 import "./styles/styles.css";
-export { createEmptyModel, plainToModel, isEmptyModel, modelToPlain, cloneModel } from "./utils/serialize";
+export {
+  createEmptyModel,
+  plainToModel,
+  isEmptyModel,
+  modelToPlain,
+  cloneModel,
+} from "./utils/serialize";
 export { ssmlToModel, valueToModel, ssmlToPlain, modelToSSML } from "./utils/ssml";
+export type { SSMLSerializeOptions } from "./utils/ssml";
 export type {
   AnnotationFeatures,
   AnnotationType,

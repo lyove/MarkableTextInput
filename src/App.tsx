@@ -242,7 +242,7 @@ function VanillaEditorSection() {
 // React wrapper demo
 // ---------------------------------------------------------------------------
 
-export function ReactEditorSection() {
+function ReactEditorSection() {
   const editorRef = useRef<SSMLEditorRef>(null);
 
   const [value, setValue] = useState<SSMLEditorValue>(SSML_SAMPLE);
@@ -386,7 +386,7 @@ export default function App() {
   return (
     <div className="app">
       <VanillaEditorSection />
-      {/* <ReactEditorSection /> */}
+      <ReactEditorSection />
       <div className="app-foot">
         SSML-Editor · phoneme / break / prosody / emphasis / say-as / hint annotation ·
         multi-instance safe · Cmd/Ctrl+Z to undo

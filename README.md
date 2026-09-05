@@ -44,7 +44,7 @@ npm run type-check  # 仅 TypeScript 类型检查
 interface SSMLModel {
   blocks: SSMLBlock[];           // 段落
   annotations: SSMLAnnotation[]; // 标注
-  hints?: ModelHint[];            // 提示标注（可选，不进入 SSML）
+  hints?: ModelHint[];            // 提示标注（可选，默认不进入 SSML；modelToSSML(model, { includeHints: true }) 可输出 <hint>）
 }
 
 /** 对外赋值时 accepted 的形状：可直接传 SSML 字符串，内部归一化为 SSMLModel */
@@ -221,7 +221,7 @@ export type {
 ```ts
 // utils/ssml.ts
 ssmlToModel(xml: string): SSMLModel;       // SSML/HTML 串 → 结构化模型，失败回退纯文本
-modelToSSML(model: SSMLModel): string;     // 结构化模型 → 标准 <speak>...</speak> SSML
+modelToSSML(model: SSMLModel, options?: { includeHints?: boolean }): string;  // 结构化模型 → 标准 <speak>...</speak> SSML（默认剥离 hint）
 valueToModel(value: SSMLEditorValue): SSMLModel; // 入口归一化：string 走 ssmlToModel，SSMLModel 直通；空串给空模型
 ssmlToPlain(xml: string): string;          // SSML 串 → 纯文本（= ssmlToModel + modelToPlain）
 
