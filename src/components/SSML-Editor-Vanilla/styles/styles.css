@@ -188,6 +188,7 @@
   line-height: 1.5;
   white-space: nowrap;
   pointer-events: none;
+  opacity: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -244,6 +245,7 @@
   border-bottom: 2px dotted #f5a623;
   z-index: 0;
   pointer-events: none;
+  opacity: 0;
 }
 
 .se-hint-group:hover .se-ch.se-hinted {
@@ -279,6 +281,7 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  opacity: 0;
   transition: opacity 0.14s ease, transform 0.14s ease, visibility 0.14s ease;
   background: #1f2430;
   border-radius: 8px;
@@ -414,6 +417,7 @@
   left: 14px;
   color: #b0b7c3;
   pointer-events: none;
+  opacity: 0;
   user-select: none;
 }
 
@@ -440,6 +444,7 @@
   white-space: pre;
   overflow: hidden;
   pointer-events: none;
+  opacity: 0;
 }
 
 /* ------------------------------------------------------------------ */
