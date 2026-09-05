@@ -25,7 +25,7 @@ export interface EditorEvents {
 // Generic typed EventBus
 // ---------------------------------------------------------------------------
 
-export class EventBus<T extends Record<string, any>> {
+export class EventBus<T extends object> {
   private readonly handlers = new Map<keyof T, Set<(data: T[keyof T]) => void>>();
 
   /** Subscribe to an event. Returns an unsubscribe function. */

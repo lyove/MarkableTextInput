@@ -26,6 +26,13 @@ export class SelectionService {
     });
   }
 
+  cancelScheduledHostPosition(): void {
+    if (this.hostPosRafId) {
+      cancelAnimationFrame(this.hostPosRafId);
+      this.hostPosRafId = 0;
+    }
+  }
+
   positionInputHostToCursor(): void {
     const { ctx } = this;
     const host = ctx.inputHost;

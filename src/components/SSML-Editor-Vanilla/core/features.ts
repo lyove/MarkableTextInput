@@ -11,9 +11,11 @@ import type {
  * - `false`              → disabled (display fields still default, unused when disabled)
  * - `{ ... }`            → enabled with the given toneFormat / showAll
  */
-function resolvePhoneme(
-  v: boolean | PhonemeFeature | undefined,
-): { enabled: boolean; toneFormat: ToneFormat; showAll: boolean } {
+function resolvePhoneme(v: boolean | PhonemeFeature | undefined): {
+  enabled: boolean;
+  toneFormat: ToneFormat;
+  showAll: boolean;
+} {
   if (v === false) {
     return { enabled: false, toneFormat: "symbol", showAll: false };
   }

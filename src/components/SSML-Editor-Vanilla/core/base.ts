@@ -90,7 +90,7 @@ export class SSMLEditor implements EditorContext {
 
   constructor(options: SSMLEditorOptions) {
     this.hostEl = options.el;
-    this.onChangeCb = options.onChange ?? (() => {});
+    this.onChangeCb = options.onChange ?? (() => undefined);
     this.styleOpts = options.style;
     this.readOnly = options.readOnly ?? false;
     this.placeholder = options.placeholder ?? "";
@@ -224,6 +224,7 @@ export class SSMLEditor implements EditorContext {
 
   destroy(): void {
     this.ime.cancelCaretRender();
+    this.selection.cancelScheduledHostPosition();
     if (this.state.render.idlePaintCancel) {
       this.state.render.idlePaintCancel();
       this.state.render.idlePaintCancel = null;

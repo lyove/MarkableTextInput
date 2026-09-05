@@ -119,7 +119,9 @@ export abstract class BasePopover {
   }
 
   /** Hook called during destroy. Override to null out subclass references. */
-  protected onDestroy(): void {}
+  protected onDestroy(): void {
+    /* no-op override hook */
+  }
 
   // ── Shared element builders ──────────────────────────────────────
 

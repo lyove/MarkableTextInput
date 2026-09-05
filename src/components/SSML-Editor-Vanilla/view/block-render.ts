@@ -1,7 +1,12 @@
 /**
  * Block-tree DOM construction — declarative VNode pipeline.
  */
-import type { AnnotationType, ResolvedAnnotationFeatures, SSMLAnnotation, SSMLModel } from "../types";
+import type {
+  AnnotationType,
+  ResolvedAnnotationFeatures,
+  SSMLAnnotation,
+  SSMLModel,
+} from "../types";
 import type { SelectionSpan } from "../utils/selection";
 
 import {

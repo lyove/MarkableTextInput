@@ -138,7 +138,6 @@ export class ImeService {
       next = insertTextAtCursor(next, anchor, text);
       cursor = { blockId: anchor.blockId, idx: anchor.idx + codePoints };
       this.lastTypingText = "";
-      ctx.history.commit(next);
     } else {
       const c = ctx.state.cursor;
       let target = c ? sanitizeCursor(ctx.state.model, c) : null;
@@ -154,10 +153,14 @@ export class ImeService {
         next = { blocks: [block], annotations: [], hints: [] };
         cursor = { blockId: block.id, idx: codePoints };
       }
-      ctx.history.commit(next, true, this.typingMergeKey(text, fromComposition));
     }
     ctx.bus.emit("cursor:change", cursor);
     ctx.state.composingText = "";
+    if (spans) {
+      ctx.history.commit(next);
+    } else {
+      ctx.history.commit(next, true, this.typingMergeKey(text, fromComposition));
+    }
     ctx.bus.emit("overlay:close");
     ctx.bus.emit("selection:change", null);
     this.resetHostCaret();
