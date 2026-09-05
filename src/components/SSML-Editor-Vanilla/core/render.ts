@@ -533,6 +533,7 @@ export class RenderService {
         if (el) {
           const prev = paintedVNs?.get(block.id);
           const next = buildBlockVNodes(renderCtx, block);
+          el.classList.toggle("has-pinyin", vnodesHavePinyin(next));
           if (prev) {
             diffBlockChildren(prev, next, el);
           } else {
