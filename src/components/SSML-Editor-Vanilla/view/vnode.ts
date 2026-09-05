@@ -310,10 +310,11 @@ export function buildBlockVNodes(ctx: BlockRenderCtx, block: SSMLBlock): VNode[]
       }
     }
 
+    pushCaret(i);
+
     const bk = breakAt.get(i);
     const breakActive = !!bk && ctx.Features.break;
     if (breakActive) {
-      pushCaret(i);
       out.push(makeBreak(bk, i));
     }
 
@@ -324,10 +325,6 @@ export function buildBlockVNodes(ctx: BlockRenderCtx, block: SSMLBlock): VNode[]
           out.push(makeBracket(slot.ann, slot.side));
         }
       }
-    }
-
-    if (!breakActive) {
-      pushCaret(i);
     }
 
     const hint = hintTextAt(i);
@@ -754,6 +751,9 @@ export function caretInsertionPoint(vnodes: VNode[], idx: number): CaretInsertio
         continue;
       }
       case "bracket":
+        if (vn.side === "left" && vn.start === idx) {
+          return { list: vnodes, index: p, group: null };
+        }
         continue;
     }
   }

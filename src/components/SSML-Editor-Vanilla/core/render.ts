@@ -73,6 +73,23 @@ function hintKeyOf(h: ModelHint): string {
   return `${h.id}|${h.start}|${h.end}|${h.text}`;
 }
 
+/**
+ * Walk a block's VNode tree (including hint-group children) and return true
+ * when at least one char carries phoneme display data — either an explicit
+ * phoneme annotation or a showAll auto-generated reading.
+ */
+function vnodesHavePinyin(vnodes: VNode[]): boolean {
+  for (const vn of vnodes) {
+    if (vn.type === "char" && vn.phoneme) {
+      return true;
+    }
+    if (vn.type === "hint-group" && vnodesHavePinyin(vn.children)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export class RenderService {
   constructor(private ctx: EditorContext) {}
 
@@ -410,6 +427,9 @@ export class RenderService {
         const vns = buildBlockVNodes(renderCtx, block);
         const p = document.createElement("p");
         p.className = "se-line";
+        if (vnodesHavePinyin(vns)) {
+          p.classList.add("has-pinyin");
+        }
         p.setAttribute("data-block-id", block.id);
         p.append(...materializeVNodes(vns));
         frag.appendChild(p);
@@ -476,6 +496,9 @@ export class RenderService {
       const vns = buildBlockVNodes(renderCtx, block);
       const p = document.createElement("p");
       p.className = "se-line";
+      if (vnodesHavePinyin(vns)) {
+        p.classList.add("has-pinyin");
+      }
       p.setAttribute("data-block-id", block.id);
       p.append(...materializeVNodes(vns));
       frag.appendChild(p);
@@ -550,16 +573,19 @@ export class RenderService {
         els.set(block.id, el);
         dirty.add(block.id);
       }
+      const vns = dirty.has(block.id)
+        ? buildBlockVNodes(renderCtx, block)
+        : paintedVNs?.get(block.id) ?? [];
+      el.classList.toggle("has-pinyin", vnodesHavePinyin(vns));
       if (dirty.has(block.id)) {
         const prevVNs = paintedVNs?.get(block.id);
-        const next = buildBlockVNodes(renderCtx, block);
         if (prevVNs) {
-          diffBlockChildren(prevVNs, next, el);
+          diffBlockChildren(prevVNs, vns, el);
         } else {
-          el.replaceChildren(...materializeVNodes(next));
+          el.replaceChildren(...materializeVNodes(vns));
         }
-        paintedVNs?.set(block.id, next);
-        domRefs?.set(block.id, buildBlockDomRefs(next, el));
+        paintedVNs?.set(block.id, vns);
+        domRefs?.set(block.id, buildBlockDomRefs(vns, el));
       }
       const atPos =
         el.parentElement === content &&
